@@ -30,3 +30,10 @@ function h5readmmap(filename, name::String, pv...; mode = "r")
     end
     dat
 end
+
+function HDF5.write(parent::Union{HDF5File, HDF5Group}, name::String, data::Dict, plists...)
+    g = g_create(parent, name)
+    for (k, v) in data
+        write(g, k, v, plists...)
+    end
+end

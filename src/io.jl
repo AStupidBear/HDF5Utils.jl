@@ -19,7 +19,7 @@ function h5load(src, ::Type{T}; mode = "r+", mmaparrays = true) where T
     return obj
 end
 
-function h5save(dst, obj; force = false)
+function h5save(dst, obj::T; force = false) where T
     isfile(dst) && rm(dst)
     isempty(dst) && error("dst is empty")
     if isdefined(obj, :src) && isfile(obj.src) &&
@@ -27,7 +27,7 @@ function h5save(dst, obj; force = false)
         !Sys.iswindows() && !force
         symlink(obj.src, dst)
     else
-        h5open(dst, "w", "alignment", (0, 8)) do fid
+        h5open(dst, "w", "alignment", (0, align(obj))) do fid
             @showprogress "h5save..." for s in fieldnames(typeof(obj))
                 s == :src && continue
                 x = getfield(obj, s)
@@ -42,4 +42,4 @@ function h5save(dst, obj; force = false)
     return dst
 end
 
-h5save(dst, dict::Dict) = h5open(f -> write(f, dict), dst, "w", "alignment", (0, 8))
+h5save(dst, dict::Dict) = h5open(f -> write(f, dict), dst, "w", "alignment", (0, align(dict)))

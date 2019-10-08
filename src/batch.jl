@@ -1,3 +1,7 @@
+ccount(a) = (ndims(a) == 1 ? length(a) : size(a, ndims(a)))
+
+indbatch(x, b, offset = 0) = (C = ccount(x); min(i + offset, C):min(i + offset + b -1, C) for i in 1:b:C)
+
 function copy_batch!(dst, src)
     dmax = ndims(src) # argmax(size(src))
     nbatch = ceil(Int, sizeof(src) / 1024^3)
