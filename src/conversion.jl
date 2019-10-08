@@ -5,7 +5,6 @@ function HDF5.hdf5_to_julia_eltype(objtype::HDF5Datatype)
         n = Int(h5t_get_size(objtype.id))
         !isvar && n > 1 && return MaxLenString{n}
     elseif class_id == H5T_COMPOUND
-        class_id = h5t_get_class(objtype.id)
         n = Int(h5t_get_nmembers(objtype.id))
         field_names = Symbol[]
         field_types = DataType[]
