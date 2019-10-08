@@ -19,7 +19,7 @@ using HDF5: h5t_is_variable_str, h5s_create, h5d_write
 using HDF5: Herr, Hid, Hsize, isnull, libhdf5, writearray, readarray
 
 export d_zeros, h5load, h5save, h5readmmap, tryreadmmap
-export h5concat, h5concat_bigdata
+export h5concat, h5concat_bigdata, write_nonarray, read_nonarray
 export MaxLenString, MLString
 
 include("util.jl")
