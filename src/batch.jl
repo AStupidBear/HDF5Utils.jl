@@ -27,7 +27,7 @@ function write_batch(parent, name, data)
     return dst
 end
 
-read_nonarray(fid, s) = eval(Meta.parse(read(fid["nonarray"][s])))
+read_nonarray(fid, s) = eval(Meta.parse(String(read(fid["nonarray"][s]))))
 
 function write_nonarray(fid, s, x)
     !exists(fid, "nonarray") && g_create(fid, "nonarray")
