@@ -3,7 +3,7 @@ h5p_set_alignment(plist_id, threshold, alignment) =
 
 @init HDF5.hdf5_prop_get_set["alignment"] = (nothing, h5p_set_alignment, H5P_FILE_ACCESS)
 
-align(d::Dict) = lcm(Int[align(x) for x in values(d)])
+align(d::AbstractDict) = lcm(Int[align(x) for x in values(d)])
 
 align(x::AbstractArray{T}) where T = sizeof(T)
 
