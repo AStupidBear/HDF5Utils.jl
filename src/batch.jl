@@ -4,7 +4,7 @@ indbatch(x, b, offset = 0) = (C = ccount(x); min(i + offset, C):min(i + offset +
 
 function copy_batch!(dst, src)
     dmax = ndims(src) # argmax(size(src))
-    nbatch = ceil(Int, sizeof(src) / 1024^3)
+    nbatch = ceil(Int, 4prod(size(src)) / 1024^3)
     batchsize = size(src, dmax) ÷ nbatch
     for ts in indbatch(1:size(src, dmax), batchsize)
         inds = ntuple(d -> d == dmax ? ts : (:), ndims(src))
