@@ -1,6 +1,7 @@
 module HDF5Utils
 
-using HDF5, FillArrays, ProgressMeter, Glob, Requires
+using Distributed, Requires, Glob
+using HDF5, FillArrays, ProgressMeter
 using FillArrays: Zeros, Fill
 
 using HDF5: HDF5Dataset, DatasetOrAttribute, HDF5Compound
