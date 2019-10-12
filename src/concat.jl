@@ -77,7 +77,7 @@ end
 function h5concat_bigdata(dst, srcs; npart = 100, delete = false, ka...)
     mkpath(".h5concat")
     @showprogress pmap(enumerate(Iterators.partition(srcs, npart))) do (n, h5s)
-        isfile(".h5concat/$n.h5") && continue
+        isfile(".h5concat/$n.h5") && return
         h5concat(".h5concat/$n.h5", h5s; fast = true, ka...)
     end
     h5concat(dst, glob(".h5concat/*.h5"); ka...)
