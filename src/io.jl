@@ -19,7 +19,7 @@ function h5load(src, ::Type{T}; mode = "r+", mmaparrays = true) where T
     return obj
 end
 
-function h5save(dst, obj::T; force = false) where T
+function h5save(dst, obj::T; force = false, excludes = []) where T
     isfile(dst) && rm(dst)
     isempty(dst) && error("dst is empty")
     if isdefined(obj, :src) && isfile(obj.src) &&
@@ -30,6 +30,7 @@ function h5save(dst, obj::T; force = false) where T
         h5open(dst, "w", "alignment", (0, align(obj))) do fid
             @showprogress "h5save..." for s in fieldnames(typeof(obj))
                 s == :src && continue
+                s ∈ excludes && continue
                 x = getfield(obj, s)
                 if isa(x, AbstractArray)
                     write_batch(fid, string(s), x)
