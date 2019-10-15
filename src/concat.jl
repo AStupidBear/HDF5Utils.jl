@@ -1,7 +1,8 @@
 function h5concat(dst, srcs; dim = 1, fast = false)
     isfile(dst) && rm(dst)
     isempty(srcs) && return
-    h5open(dst, "w") do fid
+    alignment = align(h5open(read, srcs[1]))
+    h5open(dst, "w", "alignment", (0, alignment)) do fid
         type_map, size_map, pos_map, dims = Dict(), Dict(), Dict(), Dict()
         @showprogress "h5concat.config" for src in srcs
             h5open(src, "r") do fidn
