@@ -27,6 +27,10 @@ function h5concat(dst, srcs; dim = 1, fast = false)
                     end
                 end
             end
+            if myid() != 0
+                println(stderr)
+                println(stderr)
+            end
         end
         @showprogress "h5concat.init..." for c in keys(type_map)
             d_zeros(fid, c, type_map[c], size_map[c]...)
