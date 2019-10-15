@@ -1,3 +1,10 @@
+function flushprog()
+    if myid() != 0
+        println(stderr)
+        println(stderr)
+    end
+end
+    
 function h5concat(dst, srcs; dim = 1, fast = false)
     isfile(dst) && rm(dst)
     isempty(srcs) && return
@@ -27,13 +34,11 @@ function h5concat(dst, srcs; dim = 1, fast = false)
                     end
                 end
             end
-            if myid() != 0
-                println(stderr)
-                println(stderr)
-            end
+            flushprog()
         end
         @showprogress "h5concat.init..." for c in keys(type_map)
             d_zeros(fid, c, type_map[c], size_map[c]...)
+            flushprog()
         end
         if !fast
             for src in srcs
@@ -49,6 +54,7 @@ function h5concat(dst, srcs; dim = 1, fast = false)
                             fid[c][inds...] = fidn[c][indns...]
                             pos_map[c] = last(ind)
                         end
+                        flushprog()
                     end
                 end
             end
@@ -67,6 +73,7 @@ function h5concat(dst, srcs; dim = 1, fast = false)
                             x[inds...] = fidn[c][indns...]
                             pos_map[c] = last(ind)
                         end
+                        flushprog()
                     end
                     copy_batch!(fid[c], x)
                 end
