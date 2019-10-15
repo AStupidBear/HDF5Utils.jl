@@ -1,10 +1,17 @@
-function ProgressMeter.next!(p::Union{Progress, ProgressUnknown}; options...)
-    p.counter += 1
-    ProgressMeter.updateProgress!(p; options...)
-    if myid() != 1
-        println(p.output)
-        println(p.output)
+using Base: uv_write, LibuvStream
+
+function Base.flush(s::LibuvStream)
+    myid() != 1 && println(s, '\n')
+    buf = s.sendbuf
+    if buf !== nothing
+        if bytesavailable(buf) > 0
+            arr = take!(buf)
+            uv_write(s, arr)
+            return
+        end
     end
+    uv_write(s, Ptr{UInt8}(Base.eventloop()), UInt(0))
+    return
 end
     
 function h5concat(dst, srcs; dim = 1, fast = false)
