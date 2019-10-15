@@ -87,11 +87,11 @@ function h5concat(dst, srcs; dim = 1, fast = false)
 end
 
 function h5concat_bigdata(dst, srcs; npart = 100, delete = false, ka...)
-    mkpath(".h5concat")
+    catdir = mkpath(".h5concat_" * randstring())
     @showprogress pmap(enumerate(Iterators.partition(srcs, npart))) do (n, h5s)
-        isfile(".h5concat/$n.h5") && return
-        h5concat(".h5concat/$n.h5", h5s; fast = true, ka...)
+        isfile("$catdir/$n.h5") && return
+        h5concat("$catdir/$n.h5", h5s; fast = true, ka...)
     end
-    h5concat(dst, glob(".h5concat/*.h5"); ka...)
-    delete && rm(".h5concat", recursive = true)
+    h5concat(dst, glob("$catdir/*.h5"); ka...)
+    delete && rm(catdir, recursive = true)
 end
