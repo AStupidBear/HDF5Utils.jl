@@ -21,27 +21,32 @@ function h5concat(dst, srcs; dim = 1, fast = false)
     h5open(dst, "w", "alignment", (0, alignment)) do fid
         type_map, size_map, pos_map, dims = Dict(), Dict(), Dict(), Dict()
         @showprogress "h5concat.config" for src in srcs
-            h5open(src, "r") do fidn
-                for c in names(fidn)
-                    if isa(fidn[c], HDF5Dataset)
-                        pos_map[c] = 0
-                        type_map[c] = promote_type(eltype(fidn[c]), Float32)
-                        if haskey(size_map, c)
-                            for d in eachindex(size_map[c])
-                                if d == dims[c]
-                                    size_map[c][d] += size(fidn[c], d)
-                                else
-                                    size_map[c][d] = min(size_map[c][d], size(fidn[c], d))
+            try
+                h5open(src, "r") do fidn
+                    for c in names(fidn)
+                        if isa(fidn[c], HDF5Dataset)
+                            pos_map[c] = 0
+                            type_map[c] = promote_type(eltype(fidn[c]), Float32)
+                            if haskey(size_map, c)
+                                for d in eachindex(size_map[c])
+                                    if d == dims[c]
+                                        size_map[c][d] += size(fidn[c], d)
+                                    else
+                                        size_map[c][d] = min(size_map[c][d], size(fidn[c], d))
+                                    end
                                 end
+                            else
+                                dims[c] = dim > 0 ? dim : (ndims(fidn[c]) + 1 + dim)
+                                size_map[c] = collect(size(fidn[c]))
                             end
-                        else
-                            dims[c] = dim > 0 ? dim : (ndims(fidn[c]) + 1 + dim)
-                            size_map[c] = collect(size(fidn[c]))
+                        elseif !has(fid, c)
+                            o_copy(fidn[c], fid, c)
                         end
-                    elseif !has(fid, c)
-                        o_copy(fidn[c], fid, c)
                     end
                 end
+            catch e
+                println(e)
+                filter!(x -> x != src, srcs)
             end
         end
         @showprogress "h5concat.init..." for c in keys(type_map)
