@@ -3,7 +3,7 @@ function h5concat(dst, srcs; dim = 1, fast = false)
     isempty(srcs) && return
     h5open(dst, "w") do fid
         type_map, size_map, pos_map, dims = Dict(), Dict(), Dict(), Dict()
-        for src in srcs
+        @showprogress "h5concat.config" for src in srcs
             h5open(src, "r") do fidn
                 for c in names(fidn)
                     if isa(fidn[c], HDF5Dataset)
