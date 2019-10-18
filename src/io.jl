@@ -27,7 +27,7 @@ function h5save(dst, obj::T; force = false, excludes = []) where T
         !Sys.iswindows() && !force
         symlink(obj.src, dst)
     else
-        h5open(dst, "w", "alignment", (0, align(obj))) do fid
+        h5open(dst, "w", "alignment", (0, 8)) do fid
             @showprogress "h5save..." for s in fieldnames(typeof(obj))
                 s == :src && continue
                 s ∈ excludes && continue
@@ -43,4 +43,4 @@ function h5save(dst, obj::T; force = false, excludes = []) where T
     return dst
 end
 
-h5save(dst, dict::Dict) = h5open(f -> write(f, dict), dst, "w", "alignment", (0, align(dict)))
+h5save(dst, dict::Dict) = h5open(f -> write(f, dict), dst, "w", "alignment", (0, 8))
