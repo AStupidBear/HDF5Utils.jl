@@ -19,8 +19,10 @@ using HDF5: hdf5_type_id, hdf5_to_julia, hdf5_to_julia_eltype
 using HDF5: h5t_is_variable_str, h5s_create, h5d_write
 using HDF5: Herr, Hid, Hsize, isnull, libhdf5, writearray, readarray
 
-export d_zeros, h5load, h5save, h5readmmap, tryreadmmap
-export h5concat, h5concat_bigdata, write_nonarray, read_nonarray
+export d_zeros, copy_batch!, write_batch
+export read_nonarray, write_nonarray
+export h5load, h5save, h5readmmap, tryreadmmap
+export h5concat, h5concat_bigdata
 export MaxLenString, MLString
 
 include("util.jl")

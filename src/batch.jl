@@ -21,6 +21,7 @@ function d_zeros(parent, path, T, dims...)
 end
 
 function write_batch(parent, name, data)
+    has(parent, name) && o_delete(parent, name)
     T, dims = eltype(data), size(data)
     dst = d_create(parent, name, datatype(T), dataspace(dims))
     copy_batch!(dst, data)
