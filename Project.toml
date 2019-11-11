@@ -1,7 +1,7 @@
 name = "HDF5Utils"
 uuid = "2ec8e600-e6c3-11e9-3904-61c7e8636276"
 authors = ["Yao Lu <luyaocns@gmail.com>"]
-version = "0.1.0"
+version = "0.1.1"
 
 [deps]
 Distributed = "8ba89e20-285c-5b6f-9357-94700520ee1b"
