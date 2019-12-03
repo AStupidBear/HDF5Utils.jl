@@ -23,6 +23,8 @@ end
 
 macro h5bitslike(T)
     quote
+        HDF5.datatype(::Type{T}) where T <: $T = HDF5Datatype(hdf5_type_id(T))
+        
         HDF5.datatype(::T) where T <: $T = HDF5Datatype(hdf5_type_id(T))
 
         HDF5.datatype(A::AbstractArray{T}) where T <: $T = HDF5Datatype(hdf5_type_id(T))

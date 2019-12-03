@@ -88,4 +88,8 @@ function HDF5.hdf5_type_id(::Type{T}) where T <: MaxLenString
     return type_id
 end
 
+Base.zero(::Type{T}) where T <: MaxLenString = T("")
+
+Base.zero(::T) where T <: MaxLenString = T("")
+
 @h5bitslike MaxLenString

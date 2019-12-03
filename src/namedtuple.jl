@@ -11,4 +11,7 @@ function HDF5.hdf5_type_id(::Type{T}) where T <: NamedTuple
     type_id
 end
 
+Base.zero(::Type{T}) where T <: NamedTuple = T(Base.zero(fieldtype(T, s)) for s in fieldnames(T))
+Base.zero(::T) where T <: NamedTuple = T(Base.zero(fieldtype(T, s)) for s in fieldnames(T))
+
 @h5bitslike NamedTuple
