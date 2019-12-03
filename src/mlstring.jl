@@ -15,9 +15,20 @@ function MaxLenString{N}(s::AbstractString) where N
     MaxLenString{N}(data)
 end
 
-Base.convert(::Type{String}, s::MaxLenString) = unsafe_string(pointer(collect(s.data)), sizeof(s))
+function Base.convert(::Type{String}, s::MaxLenString)
+    p = pointer(collect(s.data))
+    if s.data[end] == 0x00
+        unsafe_string(p)
+    else
+        unsafe_string(p, sizeof(s))
+    end
+end
 
 Base.String(s::MaxLenString) = convert(String, s)
+
+Base.show(io::IO, mime::MIME"text/plain", s::MaxLenString) = show(io, mime, String(s))
+
+Base.show(io::IO, s::MaxLenString) = show(io, String(s))
 
 @propagate_inbounds function Base.iterate(s::MaxLenString, i::Int=firstindex(s))
     i > ncodeunits(s) && return nothing
