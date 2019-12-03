@@ -32,5 +32,6 @@ read_nonarray(fid, s) = eval(Meta.parse(String(read(fid["nonarray"][s]))))
 
 function write_nonarray(fid, s, x)
     !exists(fid, "nonarray") && g_create(fid, "nonarray")
+    has(fid["nonarray"], s) && o_delete(fid["nonarray"], s)
     fid["nonarray"][s] = isa(x, AbstractString) ? "\"" * x * "\"" : string(x)
 end
