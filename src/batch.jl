@@ -6,7 +6,7 @@ function copy_batch!(dst, src)
     dmax = ndims(src) # argmax(size(src))
     nbatch = ceil(Int, 4 * prod(size(src)) / 1024^3)
     batchsize = ceil(Int, size(src, dmax) / nbatch)
-    for ts in indbatch(1:size(src, dmax), batchsize)
+    @showprogress "copy_batch!" for ts in indbatch(1:size(src, dmax), batchsize)
         inds = ntuple(d -> d == dmax ? ts : (:), ndims(src))
         dst[inds...] = convert(Array, src[inds...])
     end
