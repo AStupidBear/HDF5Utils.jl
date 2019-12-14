@@ -104,3 +104,17 @@ Base.zero(::Type{T}) where T <: MaxLenString = T("")
 Base.zero(::T) where T <: MaxLenString = T("")
 
 @h5bitslike MaxLenString
+
+for f in [:(==), :(<=), :(>=), :<, :>, :isless, :isequal]
+    @eval Base.$f(x::MaxLenString, y::MaxLenString) = $f(x.data, y.data)
+end
+
+for N in [4, 8, 16]
+    I = Meta.parse(string("UInt", 8N))
+    @eval function Base.unique(x::AbstractArray{T}) where T <: MaxLenString{$N}
+        reinterpret(T, unique(reinterpret($I, x)))
+    end
+    @eval function Base.sort(x::AbstractArray{T}; ka...) where T <: MaxLenString{$N}
+        reinterpret(T, sort(reinterpret($I, x); ka...))
+    end
+end
