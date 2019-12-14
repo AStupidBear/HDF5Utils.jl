@@ -1,7 +1,7 @@
 module HDF5Utils
 
-using Random, Distributed, Requires, Glob
-using HDF5, FillArrays, ProgressMeter
+using Mmap, Random, Distributed, Requires
+using Glob, HDF5, FillArrays, ProgressMeter
 using FillArrays: Zeros, Fill
 
 using HDF5: HDF5Dataset, DatasetOrAttribute, HDF5Compound

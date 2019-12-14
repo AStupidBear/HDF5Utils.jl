@@ -2,31 +2,47 @@ ccount(a) = (ndims(a) == 1 ? length(a) : size(a, ndims(a)))
 
 indbatch(x, b, offset = 0) = (C = ccount(x); min(i + offset, C):min(i + offset + b -1, C) for i in 1:b:C)
 
-function copy_batch!(dst, src)
+macro pthreads(flag, ex)
+    esc(:($flag ? Threads.@threads($ex) : $ex))
+end
+
+function copy_batch!(dest, src; desc = "copy_batch: ")
     dmax = ndims(src) # argmax(size(src))
     mem = prod(size(src)) * sizeof(eltype(src))
     nbatch = ceil(Int,  mem / 1024^3 / 4)
     batchsize = ceil(Int, size(src, dmax) / nbatch)
-    @showprogress "copy_batch!" for ts in indbatch(1:size(src, dmax), batchsize)
-        inds = ntuple(d -> d == dmax ? ts : (:), ndims(src))
-        dst[inds...] = convert(Array, src[inds...])
+    slices = collect(indbatch(1:size(src, dmax), batchsize))
+    p = Progress(length(slices), desc = desc)
+    flag = isa(dest, AbstractArray)
+    @pthreads flag for slice in slices
+        is = ntuple(d -> d == dmax ? slice : (:), ndims(src))
+        dest[is...] = convert(Array, src[is...])
+        next!(p)
     end
-    return dst
+    return dest
 end
 
 function d_zeros(parent, path, T, dims...)
+    has(parent, path) && o_delete(path)
     @assert all(x -> x > 0, dims)
-    dst = d_create(parent, path, datatype(T), dataspace(dims))
-    copy_batch!(dst, Zeros{T}(dims...))
-    return dst
+    dset = d_create(parent, path, datatype(T), dataspace(dims))
+    copy_batch!(dset, Zeros{T}(dims...), desc = "zeros.$path ")
+    flush(dset)
+    return dset
 end
 
 function write_batch(parent, name, data)
     has(parent, name) && o_delete(parent, name)
     T, dims = eltype(data), size(data)
-    dst = d_create(parent, name, datatype(T), dataspace(dims))
-    copy_batch!(dst, data)
-    return dst
+    if Threads.nthreads() > 1
+        dset = d_zeros(parent, name, T, dims...)
+        arr = readmmap(dset)
+        copy_batch!(arr, data, desc = "write.$name ")
+        Mmap.sync!(arr)
+    else
+        dset = d_create(parent, name, datatype(T), dataspace(dims))
+        copy_batch!(dset, data, desc = "write.$name ")
+    end
 end
 
 read_nonarray(fid, s) = eval(Meta.parse(String(read(fid["nonarray"][s]))))

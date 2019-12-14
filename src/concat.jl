@@ -19,7 +19,7 @@ function h5concat(dst, srcs; dim = 1, fast = false)
     isempty(srcs) && return
     h5open(dst, "w", "alignment", (0, 8)) do fid
         type_map, size_map, pos_map, dims = Dict(), Dict(), Dict(), Dict()
-        @showprogress "h5concat.config" for src in srcs
+        @showprogress "h5concat.config: " for src in srcs
             h5open(src, "r") do fidn
                 for c in names(fidn)
                     if isa(fidn[c], HDF5Dataset)
@@ -43,14 +43,14 @@ function h5concat(dst, srcs; dim = 1, fast = false)
                 end
             end
         end
-        @showprogress "h5concat.init..." for c in keys(type_map)
+        @showprogress "h5concat.init: " for c in keys(type_map)
             d_zeros(fid, c, type_map[c], size_map[c]...)
         end
         if !fast
             for src in srcs
                 h5open(src, "r") do fidn
                     name = basename(src)
-                    @showprogress "h5concat.$name..." for c in keys(type_map) ∩ names(fidn)
+                    @showprogress "h5concat.$name: " for c in keys(type_map) ∩ names(fidn)
                         ends = pos_map[c] + size(fidn[c], dims[c])
                         ind = (pos_map[c] + 1):min(ends, size_map[c][dims[c]])
                         indn = ind .- pos_map[c]
@@ -68,7 +68,7 @@ function h5concat(dst, srcs; dim = 1, fast = false)
             try
                 for c in keys(type_map)
                     x = read(fid[c])
-                    @showprogress "h5concat.$c..." for fidn in fids
+                    @showprogress "h5concat.$c: " for fidn in fids
                         ends = pos_map[c] + size(fidn[c], dims[c])
                         ind = (pos_map[c] + 1):min(ends, size_map[c][dims[c]])
                         indn = ind .- pos_map[c]

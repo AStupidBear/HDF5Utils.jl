@@ -2,6 +2,8 @@ using HDF5Utils
 using HDF5
 using Test
 
+cd(mktempdir())
+
 dict = Dict(
     "str" => "abcdef",
     "mlstr" => s10"北京欢迎你",
@@ -26,7 +28,7 @@ mutable struct Data
     w::String
 end
 data = Data(rand(Float32, 2, 2), rand(2, 2, 2), Dict("a" => 1), "abcd")
-h5save("test.h5", data, force = true)
+h5save("test.h5", data)
 data′ = h5load("test.h5", Data)
 for s in fieldnames(Data)
     @test getfield(data, s) == getfield(data′, s)
@@ -40,3 +42,24 @@ h5concat_bigdata("concat.h5", repeat(["test.h5"], 100), npart = 10, dim = 1, del
 
 rm("test.h5")
 rm("concat.h5")
+
+# using HDF5, HDF5Utils, Mmap
+# h5open("test.h5", "w", "alignment", (0, 8)) do fid
+#     # fid["a"] = [1, 2]
+#     # x = readmmap(fid["a"])
+#     # x[1] = 11
+#     # Mmap.sync!(x)
+#     # dset = d_zeros(fid, "a", Float32, 10, 10)
+#     d_create(fid, "a", HDF5.datatype(Float32), HDF5.dataspace((10, 10)))
+#     fid["a"][:, :] = zeros(10, 10)
+#     HDF5.flush(fid["a"])
+#     # fid["a"] = zeros(10, 10)
+#     dset = fid["a"]
+#     # dset[:, :] = 2
+#     arr = readmmap(dset)
+#     arr[1] = 100
+#     # copy_batch!(arr, data)
+#     # write_batch(fid, "a", [1, 2])
+#     return nothing
+# end
+# dict = h5open(readmmap, "test.h5",  "r+")

@@ -3,9 +3,7 @@ function h5load(src, ::Type{T}; mode = "r+", mmaparrays = true) where T
         o, r = Any[], !Sys.iswindows() && mmaparrays ? readmmap : read
         for s in fieldnames(T)
             ft = fieldtype(T, s)
-            if s == :src
-                x = src
-            elseif ft <: AbstractArray
+            if ft <: AbstractArray
                 x = string(s) ∈ names(fid) ? r(fid[string(s)]) :
                     zeros(ft.parameters[1], ntuple(i -> 0, ft.parameters[2]))
             else
@@ -19,24 +17,17 @@ function h5load(src, ::Type{T}; mode = "r+", mmaparrays = true) where T
     return obj
 end
 
-function h5save(dst, obj::T; force = false, excludes = []) where T
+function h5save(dst, obj::T; excludes = []) where T
     isfile(dst) && rm(dst)
     isempty(dst) && error("dst is empty")
-    if isdefined(obj, :src) && isfile(obj.src) &&
-        splitext(dst)[2] == splitext(obj.src)[2] &&
-        !Sys.iswindows() && !force
-        symlink(obj.src, dst)
-    else
-        h5open(dst, "w", "alignment", (0, 8)) do fid
-            @showprogress "h5save..." for s in fieldnames(typeof(obj))
-                s == :src && continue
-                s ∈ excludes && continue
-                x = getfield(obj, s)
-                if isa(x, AbstractArray)
-                    write_batch(fid, string(s), x)
-                else
-                    write_nonarray(fid, string(s), x)
-                end
+    h5open(dst, "w", "alignment", (0, 8)) do fid
+        for s in fieldnames(typeof(obj))
+            s ∈ excludes && continue
+            x = getfield(obj, s)
+            if isa(x, AbstractArray)
+                write_batch(fid, string(s), x)
+            else
+                write_nonarray(fid, string(s), x)
             end
         end
     end
