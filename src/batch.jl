@@ -7,6 +7,7 @@ macro pthreads(flag, ex)
 end
 
 function copy_batch!(dest, src; desc = "copy_batch: ")
+    @assert !isempty(src)
     dmax = ndims(src) # argmax(size(src))
     mem = prod(size(src)) * sizeof(eltype(src))
     nbatch = ceil(Int,  mem / 1024^3 / 4)
