@@ -1,20 +1,4 @@
-using Base: uv_write, LibuvStream
-
-function Base.flush(s::LibuvStream)
-    myid() != 1 && println(s, '\n')
-    buf = s.sendbuf
-    if buf !== nothing
-        if bytesavailable(buf) > 0
-            arr = take!(buf)
-            uv_write(s, arr)
-            return
-        end
-    end
-    uv_write(s, Ptr{UInt8}(Base.eventloop()), UInt(0))
-    return
-end
-    
-function h5concat(dst, srcs; dim = 1, fast = false)
+ function h5concat(dst, srcs; dim = 1, fast = false)
     isfile(dst) && rm(dst)
     isempty(srcs) && return
     h5open(dst, "w", "alignment", (0, 8)) do fid
