@@ -26,6 +26,8 @@ function h5save(dst, obj::T; excludes = []) where T
             x = getfield(obj, s)
             if isa(x, AbstractArray)
                 write_batch(fid, string(s), x)
+            elseif isa(x, HDF5Dataset)
+                HDF5.create_external(fid, s, filename(x), name(x))
             else
                 write_nonarray(fid, string(s), x)
             end
