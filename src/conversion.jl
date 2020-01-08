@@ -5,9 +5,6 @@ function HDF5.hdf5_to_julia_eltype(objtype::HDF5Datatype)
         n = Int(h5t_get_size(objtype.id))
         if !isvar && 1 < n < 32
             ENV["CSET"] = h5t_get_cset(objtype.id)
-            finalizer(objtype) do x
-                delete!(ENV, "CSET")
-            end
             return MaxLenString{n}
         end
     elseif class_id == H5T_COMPOUND
