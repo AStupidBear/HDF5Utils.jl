@@ -95,7 +95,8 @@ end
 function HDF5.hdf5_type_id(::Type{T}) where T <: MaxLenString
     type_id = h5t_copy(hdf5_type_id(String))
     h5t_set_size(type_id, sizeof(T))
-    h5t_set_cset(type_id, H5T_CSET_UTF8)
+    cset = get(ENV, "CSET", string(H5T_CSET_UTF8))
+    h5t_set_cset(type_id, parse(Int, cset))
     return type_id
 end
 
