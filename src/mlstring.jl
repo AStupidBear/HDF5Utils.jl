@@ -119,3 +119,5 @@ for N in [4, 8, 16]
         reinterpret(T, sort(reinterpret($I, x); ka...))
     end
 end
+
+Base.hash(x::MaxLenString) = hash(x.data)
