@@ -10,7 +10,8 @@ function copy_batch!(dest, src; desc = "copy_batch: ")
     @assert !isempty(src)
     dmax = ndims(src) # argmax(size(src))
     mem = prod(size(src)) * sizeof(eltype(src))
-    nbatch = ceil(Int,  mem / 1024^3 / 4)
+    batchmem = min(4096, Sys.total_memory() / 1024^2 / 5)
+    nbatch = ceil(Int,  mem / 1024^2 / batchmem)
     batchsize = ceil(Int, size(src, dmax) / nbatch)
     slices = collect(indbatch(1:size(src, dmax), batchsize))
     p = Progress(length(slices), desc = desc)
@@ -23,25 +24,25 @@ function copy_batch!(dest, src; desc = "copy_batch: ")
     return dest
 end
 
-function d_zeros(parent, path, T, dims...)
+function d_zeros(parent, path, T, dims, a...)
     has(parent, path) && o_delete(path)
     @assert all(x -> x > 0, dims)
-    dset = d_create(parent, path, datatype(T), dataspace(dims))
+    dset = d_create(parent, path, datatype(T), dataspace(dims), a...)
     copy_batch!(dset, Zeros{T}(dims...), desc = "zeros.$path ")
     flush(dset)
     return dset
 end
 
-function write_batch(parent, name, data)
+function write_batch(parent, name, data, a...)
     has(parent, name) && o_delete(parent, name)
     T, dims = eltype(data), size(data)
     if Threads.nthreads() > 1
-        dset = d_zeros(parent, name, T, dims...)
+        dset = d_zeros(parent, name, T, dims, a...)
         arr = readmmap(dset)
         copy_batch!(arr, data, desc = "write.$name ")
         Mmap.sync!(arr)
     else
-        dset = d_create(parent, name, datatype(T), dataspace(dims))
+        dset = d_create(parent, name, datatype(T), dataspace(dims), a...)
         copy_batch!(dset, data, desc = "write.$name ")
     end
 end
