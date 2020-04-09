@@ -1,7 +1,7 @@
 name = "HDF5Utils"
 uuid = "2ec8e600-e6c3-11e9-3904-61c7e8636276"
 authors = ["Yao Lu <luyaocns@gmail.com>"]
-version = "0.1.15"
+version = "0.1.16"
 
 [deps]
 Distributed = "8ba89e20-285c-5b6f-9357-94700520ee1b"
@@ -14,11 +14,11 @@ Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 Requires = "ae029012-a4dd-5104-9daa-d747884805df"
 
 [compat]
-FillArrays = "0.7"
+FillArrays = "0.7, 0.8"
 Glob = "1.2"
-HDF5 = "0.12"
+HDF5 = "0.12, 0.13"
 ProgressMeter = "1"
-Requires = "0.5"
+Requires = "0.5, 1"
 julia = "1"
 
 [extras]

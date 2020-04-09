@@ -28,7 +28,7 @@
             end
         end
         @showprogress "h5concat.init: " for c in keys(type_map)
-            d_zeros(fid, c, type_map[c], size_map[c]...)
+            d_zeros(fid, c, type_map[c], size_map[c])
         end
         if !fast
             for src in srcs

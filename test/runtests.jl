@@ -17,6 +17,10 @@ dict = Dict(
         "group" => Dict("arr[float64]" => ones(10)),
         )
     )
+# dict = Dict(
+#     "str" => "abcdef",
+#     "mlstr" => (a=1,b=2),
+# )
 h5save("test.h5", dict)
 @test h5open(read, "test.h5") == dict
 @test h5open(tryreadmmap, "test.h5") == dict

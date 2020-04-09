@@ -32,7 +32,7 @@ macro h5bitslike(T)
 
         HDF5.datatype(A::AbstractArray{T}) where T <: $T = HDF5Datatype(hdf5_type_id(T))
 
-        HDF5.read(obj::DatasetOrAttribute, ::Type{T}) where T <: $T = read(obj, Array{T})[1]
+        HDF5.read(obj::HDF5Dataset, ::Type{T}) where T <: $T = read(obj, Array{T})[1]
         
         function HDF5.read(obj::HDF5Dataset, ::Type{Array{T}}) where T <: $T
             if isnull(obj)
