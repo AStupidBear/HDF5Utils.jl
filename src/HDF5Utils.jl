@@ -18,6 +18,7 @@ export h5load, h5save, h5readmmap, tryreadmmap
 export h5concat, h5concat_bigdata
 export MaxLenString, MLString
 
+include("diskarrays.jl")
 include("util.jl")
 include("batch.jl")
 include("concat.jl")

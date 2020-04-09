@@ -12,6 +12,8 @@ function tryreadmmap(obj::HDF5Dataset)
     T = hdf5_to_julia(obj)
     if ismmappable(T) && iscontiguous(obj)
         readmmap(obj, T)
+    elseif T <: AbstractArray
+        HDF5DiskArray(obj)
     else
         read(obj, T)
     end

@@ -17,13 +17,9 @@ dict = Dict(
         "group" => Dict("arr[float64]" => ones(10)),
         )
     )
-# dict = Dict(
-#     "str" => "abcdef",
-#     "mlstr" => (a=1,b=2),
-# )
 h5save("test.h5", dict)
 @test h5open(read, "test.h5") == dict
-@test h5open(tryreadmmap, "test.h5") == dict
+@test h5load("test.h5") == dict
 
 mutable struct Data
     x::Array{Float32, 2}
@@ -43,6 +39,12 @@ h5concat("concat.h5", repeat(["test.h5"], 100), dim = -2)
 
 h5concat_bigdata("concat.h5", repeat(["test.h5"], 100), npart = 10, dim = 1, delete = true)
 @test h5load("concat.h5", Data).y == vcat(repeat([data.y], 100)...)
+
+h5open("test.h5", "w") do fid
+    fid["x", "compress", 3] = [1 2; 3 4]
+end
+x = h5load("test.h5")["x"]
+@test sum(x) == 10
 
 rm("test.h5")
 rm("concat.h5")

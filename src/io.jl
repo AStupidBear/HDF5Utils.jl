@@ -1,18 +1,26 @@
 function h5load(src, ::Type{T}; mode = "r+", mmaparrays = true) where T
-    obj::T = h5open(src, mode) do fid
-        o, r = Any[], !Sys.iswindows() && mmaparrays ? readmmap : read
-        for s in fieldnames(T)
-            ft = fieldtype(T, s)
-            if ft <: AbstractArray
-                x = string(s) ∈ names(fid) ? r(fid[string(s)]) :
-                    zeros(ft.parameters[1], ntuple(i -> 0, ft.parameters[2]))
-            else
-                x = ft(read_nonarray(fid, string(s)))
-            end
-            push!(o, x)
+    fid = h5open(src, mode)
+    o, r = Any[], !Sys.iswindows() && mmaparrays ? tryreadmmap : read
+    for s in fieldnames(T)
+        ft = fieldtype(T, s)
+        if ft <: AbstractArray
+            x = string(s) ∈ names(fid) ? r(fid[string(s)]) :
+                zeros(ft.parameters[1], ntuple(i -> 0, ft.parameters[2]))
+        else
+            x = ft(read_nonarray(fid, string(s)))
         end
-        T(o...)
+        push!(o, x)
     end
+    obj = T(o...)
+    finalizer(x -> close(fid), obj)
+    finalizer(x -> HDF5.h5_garbage_collect(), obj)
+    return obj
+end
+
+function h5load(src; mode = "r+", mmaparrays = true)
+    fid = h5open(src, mode)
+    obj = !Sys.iswindows() && mmaparrays ? tryreadmmap(fid) : read(fid)
+    finalizer(x -> close(fid), obj)
     finalizer(x -> HDF5.h5_garbage_collect(), obj)
     return obj
 end
