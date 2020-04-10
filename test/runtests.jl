@@ -1,5 +1,6 @@
 using HDF5Utils
 using HDF5
+using Glob
 using Test
 
 cd(mktempdir())
@@ -46,23 +47,18 @@ end
 x = h5load("test.h5")["x"]
 @test sum(x) == 10
 
-rm("test.h5")
-rm("concat.h5")
-
-for i in 1:5
-    h5open("vds_$i.h5", "w") do fid
-        fid["x"] = rand(10, i, 9, 3)
-    end
-end
+GC.gc(true)
 h5open("vds.h5", "w") do fid
-    layout = VirtualLayout((10, sum(1:5), 9, 3), Float64)
+    layout = VirtualLayout((10, sum(1:5)), Float64)
     for i in 1:5
+        h5open("vds_$i.h5", "w") do fid′
+            fid′["x"] = rand(10, i)
+        end
         off = sum(1:i-1)
-        layout[:,  (off + 1):(off + i), :, :] = VirtualSource("vds_$i.h5", "x")[:, :, :, :]
+        layout[:,  (off + 1):(off + i)] = VirtualSource("vds_$i.h5", "x")[:, :]
     end
     d_create_virtual(fid, "x", layout)
 end
-for i in 1:5
-    rm("vds_$i.h5")
-end
-rm("vds.h5")
+@test h5load("vds.h5", virtual = true)["x"] ≈ hcat([h5load(h5, virtual = true)["x"] for h5 in glob("vds_*.h5")]...)
+
+foreach(rm, glob("*.h5"))

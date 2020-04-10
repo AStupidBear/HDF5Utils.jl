@@ -12,7 +12,7 @@ using HDF5: H5S_ALL, H5S_SELECT_SET, H5S_SCALAR, H5F_CLOSE_STRONG
 using HDF5: h5t_create, h5t_insert, h5t_close, h5t_copy, h5t_get_size, h5t_set_size
 using HDF5: h5t_get_cset, h5t_set_cset, h5t_get_class, h5t_get_nmembers
 using HDF5: h5t_get_member_type, h5t_get_member_name, h5t_is_variable_str
-using HDF5: h5s_create, h5s_close, h5s_select_hyperslab, h5d_read, h5d_write
+using HDF5: h5s_create, h5s_close, h5s_select_hyperslab, h5d_read, h5d_write, h5f_close
 using HDF5: hdf5_type_id, hdf5_to_julia, hdf5_to_julia_eltype, hyperslab
 using HDF5: Herr, Hid, Hsize, isnull, libhdf5, writearray, readarray, checkvalid, checkprops
 import DiskArrays: eachchunk, haschunks, readblock!, writeblock!, GridChunks, Chunked, Unchunked

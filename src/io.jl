@@ -1,24 +1,45 @@
-function h5load(src, ::Type{T}; mode = "r+", mmaparrays = true) where T
-    fid = h5open(src, mode, fclose_degree = 0)
+function h5open_weak(filename::AbstractString, mode::AbstractString="r", pv...; swmr=false)
+    checkprops(pv...)
+    # pv is interpreted as pairs of arguments
+    # the first of a pair is a key of hdf5_prop_get_set
+    # the second of a pair is a property value
+    fapl = p_create(H5P_FILE_ACCESS, true, pv...) # file access property list
+    # With garbage collection, the other modes don't make sense
+    # (Set this first, so that the user-passed properties can overwrite this.)
+    fcpl = p_create(H5P_FILE_CREATE, true, pv...) # file create property list
+    modes =
+        mode == "r"  ? (true,  false, false, false, false) :
+        mode == "r+" ? (true,  true,  false, false, true ) :
+        mode == "cw" ? (false, true,  true,  false, true ) :
+        mode == "w"  ? (false, true,  true,  true,  false) :
+        # mode == "w+" ? (true,  true,  true,  true,  false) :
+        # mode == "a"  ? (true,  true,  true,  true,  true ) :
+        error("invalid open mode: ", mode)
+    h5open(filename, modes..., fcpl, fapl; swmr=swmr)
+end
+
+function h5load(src, ::Type{T}; mode = "r", mmaparrays = true, virtual = false) where T
+    @eval GC.gc(true)
+    fid = (virtual ? h5open_weak : h5open)(src, mode)
     o, r = Any[], !Sys.iswindows() && mmaparrays ? tryreadmmap : read
     for s in fieldnames(T)
         ft = fieldtype(T, s)
         if ft <: AbstractArray
             x = string(s) ∈ names(fid) ? r(fid[string(s)]) :
                 zeros(ft.parameters[1], ntuple(i -> 0, ft.parameters[2]))
-        else
-            x = ft(read_nonarray(fid, string(s)))
+            else
+                x = ft(read_nonarray(fid, string(s)))
+            end
+            push!(o, x)
         end
-        push!(o, x)
+        obj = T(o...)
+        finalizer(x -> HDF5.h5_garbage_collect(), obj)
+        return obj
     end
-    obj = T(o...)
-    finalizer(x -> HDF5.h5_garbage_collect(), obj)
-    close(fid)
-    return obj
-end
-
-function h5load(src; mode = "r+", mmaparrays = true)
-    fid = h5open(src, mode)
+    
+function h5load(src; mode = "r", mmaparrays = true, virtual = false)
+    @eval GC.gc(true)
+    fid = (virtual ? h5open_weak : h5open)(src, mode)
     obj = !Sys.iswindows() && mmaparrays ? tryreadmmap(fid) : read(fid)
     finalizer(x -> HDF5.h5_garbage_collect(), obj)
     return obj
@@ -39,6 +60,7 @@ function h5save(dst, obj::T; excludes = []) where T
                 write_nonarray(fid, string(s), x)
             end
         end
+        flush(fid)
     end
     return dst
 end
