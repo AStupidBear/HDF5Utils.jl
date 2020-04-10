@@ -21,7 +21,7 @@ export HDF5DiskArray
 export d_zeros, copy_batch!, write_batch
 export read_nonarray, write_nonarray
 export h5load, h5save, h5readmmap, tryreadmmap
-export h5concat, h5concat_bigdata
+export h5concat, h5concat_bigdata, h5concat_vds
 export MaxLenString, MLString
 export d_create_virtual, VirtualLayout, VirtualSource
 

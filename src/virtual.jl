@@ -7,7 +7,7 @@ struct VirtualLayout{S, D, SS}
     sources::SS
 end
 
-VirtualLayout(shape, dtype) = VirtualLayout(shape, dtype, [])
+VirtualLayout(shape, dtype) = VirtualLayout(tuple(shape...), dtype, [])
 
 repcolon(is, shape) = ifelse.(is .== Colon(), Base.OneTo.(shape), is)
 
@@ -28,7 +28,7 @@ function VirtualSource(path, name)
 end
 
 VirtualSource(dset::HDF5Dataset) = 
-    VirtualSource(file(dset), name(dset), size(dset), eltype(dset), nothing)
+    VirtualSource(filename(dset), name(dset), size(dset), eltype(dset), nothing)
 
 Base.getindex(vs::VirtualSource, is...) = VirtualSource(vs.path, vs.name, vs.shape, vs.dtype, repcolon(is, vs.shape))
 
@@ -38,7 +38,7 @@ function select_hyperslab(dspace, is)
     count = [1 for i in is]
     stride = [step(i) for i in is]
     block = [length(i) for i in reverse(is)]
-    h5s_select_hyperslab(dspace, H5S_SELECT_SET, start, count, count, block)
+    h5s_select_hyperslab(dspace, H5S_SELECT_SET, start, stride, count, block)
     return dspace
 end
 

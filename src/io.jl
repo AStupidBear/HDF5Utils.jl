@@ -46,6 +46,7 @@ function h5load(src; mode = "r", mmaparrays = true, virtual = false)
 end
 
 function h5save(dst, obj::T; excludes = []) where T
+    @eval GC.gc(true)
     isfile(dst) && rm(dst)
     isempty(dst) && error("dst is empty")
     h5open(dst, "w", "alignment", (0, 8)) do fid
