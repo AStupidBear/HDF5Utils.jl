@@ -27,7 +27,7 @@ end
 function d_zeros(parent, path, T, dims, a...)
     has(parent, path) && o_delete(path)
     @assert all(x -> x > 0, dims)
-    dset = d_create(parent, path, datatype(T), dataspace(dims...), a...)
+    dset = d_create(parent, path, datatype(T), dataspace(tuple(dims...)), a...)
     copy_batch!(dset, Zeros{T}(dims...), desc = "zeros.$path ")
     flush(dset)
     return dset

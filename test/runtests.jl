@@ -48,3 +48,21 @@ x = h5load("test.h5")["x"]
 
 rm("test.h5")
 rm("concat.h5")
+
+for i in 1:5
+    h5open("vds_$i.h5", "w") do fid
+        fid["x"] = rand(10, i, 9, 3)
+    end
+end
+h5open("vds.h5", "w") do fid
+    layout = VirtualLayout((10, sum(1:5), 9, 3), Float64)
+    for i in 1:5
+        off = sum(1:i-1)
+        layout[:,  (off + 1):(off + i), :, :] = VirtualSource("vds_$i.h5", "x")[:, :, :, :]
+    end
+    d_create_virtual(fid, "x", layout)
+end
+for i in 1:5
+    rm("vds_$i.h5")
+end
+rm("vds.h5")

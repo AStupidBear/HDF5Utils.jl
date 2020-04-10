@@ -1,12 +1,6 @@
-using DiskArrays
-
-import DiskArrays: eachchunk, haschunks, readblock!, writeblock!, GridChunks, Chunked, Unchunked
-
-export HDF5DiskArray
-
 struct HDF5DiskArray{T, N, CS} <: AbstractDiskArray{T, N}
-  ds::HDF5Dataset
-  cs::CS
+    ds::HDF5Dataset
+    cs::CS
 end
 
 Base.size(x::HDF5DiskArray) = size(x.ds)

@@ -12,7 +12,6 @@ function h5load(src, ::Type{T}; mode = "r+", mmaparrays = true) where T
         push!(o, x)
     end
     obj = T(o...)
-    finalizer(x -> close(fid), obj)
     finalizer(x -> HDF5.h5_garbage_collect(), obj)
     return obj
 end
@@ -20,7 +19,6 @@ end
 function h5load(src; mode = "r+", mmaparrays = true)
     fid = h5open(src, mode)
     obj = !Sys.iswindows() && mmaparrays ? tryreadmmap(fid) : read(fid)
-    finalizer(x -> close(fid), obj)
     finalizer(x -> HDF5.h5_garbage_collect(), obj)
     return obj
 end

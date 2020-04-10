@@ -1,7 +1,8 @@
 module HDF5Utils
 
-using Mmap, Random, Distributed, Requires
-using Glob, HDF5, FillArrays, ProgressMeter
+using Mmap, Random, Distributed
+using Requires, ProgressMeter, Glob
+using HDF5, FillArrays, DiskArrays
 using FillArrays: Zeros, Fill
 
 using HDF5: HDF5Dataset, DatasetOrAttribute
@@ -11,12 +12,16 @@ using HDF5: h5t_get_class, h5t_get_nmembers, h5t_get_member_type, h5t_get_member
 using HDF5: hdf5_type_id, hdf5_to_julia, hdf5_to_julia_eltype, hyperslab
 using HDF5: h5t_is_variable_str, h5s_create, h5s_close, h5d_read, h5d_write
 using HDF5: Herr, Hid, Hsize, isnull, libhdf5, writearray, readarray
+using HDF5: checkvalid, H5S_SELECT_SET, h5s_select_hyperslab, H5P_DATASET_CREATE
+import DiskArrays: eachchunk, haschunks, readblock!, writeblock!, GridChunks, Chunked, Unchunked
 
+export HDF5DiskArray
 export d_zeros, copy_batch!, write_batch
 export read_nonarray, write_nonarray
 export h5load, h5save, h5readmmap, tryreadmmap
 export h5concat, h5concat_bigdata
 export MaxLenString, MLString
+export d_create_virtual, VirtualLayout, VirtualSource
 
 include("diskarrays.jl")
 include("util.jl")
@@ -28,6 +33,7 @@ include("conversion.jl")
 include("mlstring.jl")
 include("namedtuple.jl")
 include("hyperslab.jl")
+include("virtual.jl")
 
 @init @require PyCall="438e738f-606a-5dbb-bf0a-cddfbfd45ab0" include("npystring.jl")
 
