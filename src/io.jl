@@ -1,5 +1,5 @@
 function h5load(src, ::Type{T}; mode = "r+", mmaparrays = true) where T
-    fid = h5open(src, mode)
+    fid = h5open(src, mode, fclose_degree = 0)
     o, r = Any[], !Sys.iswindows() && mmaparrays ? tryreadmmap : read
     for s in fieldnames(T)
         ft = fieldtype(T, s)
@@ -13,6 +13,7 @@ function h5load(src, ::Type{T}; mode = "r+", mmaparrays = true) where T
     end
     obj = T(o...)
     finalizer(x -> HDF5.h5_garbage_collect(), obj)
+    close(fid)
     return obj
 end
 

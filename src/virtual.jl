@@ -1,3 +1,33 @@
+function HDF5.h5open(filename::AbstractString, mode::AbstractString="r", pv...; fclose_degree=H5F_CLOSE_STRONG, swmr=false)
+    checkprops(pv...)
+    # pv is interpreted as pairs of arguments
+    # the first of a pair is a key of hdf5_prop_get_set
+    # the second of a pair is a property value
+    fapl = p_create(H5P_FILE_ACCESS, true, pv...) # file access property list
+    # With garbage collection, the other modes don't make sense
+    # (Set this first, so that the user-passed properties can overwrite this.)
+    fapl["fclose_degree"] = fclose_degree
+    fcpl = p_create(H5P_FILE_CREATE, true, pv...) # file create property list
+    modes =
+        mode == "r"  ? (true,  false, false, false, false) :
+        mode == "r+" ? (true,  true,  false, false, true ) :
+        mode == "cw" ? (false, true,  true,  false, true ) :
+        mode == "w"  ? (false, true,  true,  true,  false) :
+        # mode == "w+" ? (true,  true,  true,  true,  false) :
+        # mode == "a"  ? (true,  true,  true,  true,  true ) :
+        error("invalid open mode: ", mode)
+    h5open(filename, modes..., fcpl, fapl; swmr=swmr)
+end
+
+function HDF5.h5open(f::Function, args...; swmr=false, ka...)
+    fid = h5open(args...; swmr=swmr, ka...)
+    try
+        f(fid)
+    finally
+        close(fid)
+    end
+end
+
 h5p_set_virtual(dcpl_id, vspace_id, src_file_name, src_dset_name, src_space_id) = 
     ccall((:H5Pset_virtual, libhdf5), Herr, (Hid, Hid, Ptr{UInt8}, Ptr{UInt8}, Hid), dcpl_id, vspace_id, src_file_name, src_dset_name, src_space_id)
 
@@ -33,6 +63,7 @@ VirtualSource(dset::HDF5Dataset) =
 Base.getindex(vs::VirtualSource, is...) = VirtualSource(vs.path, vs.name, vs.shape, vs.dtype, repcolon(is, vs.shape))
 
 function select_hyperslab(dspace, is)
+    isnothing(is) && return dspace
     start = [i[1] - 1 for i in reverse(is)]
     count = [1 for i in is]
     stride = [step(i) for i in is]
