@@ -29,7 +29,9 @@ get_cache_size(ds::HDF5Dataset) = _cache_size[] ÷ sizeof(eltype(ds))
 
 function HDF5DiskArray(ds::HDF5Dataset)
     cs = try
+        disable_dag()
         GridChunks(ds, get_chunk(ds))
+        enable_dag()
     catch
         nothing
     end

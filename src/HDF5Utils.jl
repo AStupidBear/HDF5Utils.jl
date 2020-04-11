@@ -24,6 +24,7 @@ export h5load, h5save, h5readmmap, tryreadmmap
 export h5concat, h5concat_bigdata, h5concat_vds
 export MaxLenString, MLString
 export d_create_virtual, VirtualLayout, VirtualSource
+export enable_dag, disable_dag
 
 include("diskarrays.jl")
 include("util.jl")
@@ -36,6 +37,7 @@ include("mlstring.jl")
 include("namedtuple.jl")
 include("hyperslab.jl")
 include("virtual.jl")
+include("auto.jl")
 
 @init @require PyCall="438e738f-606a-5dbb-bf0a-cddfbfd45ab0" include("npystring.jl")
 
