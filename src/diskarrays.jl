@@ -64,7 +64,6 @@ end
         @inbounds v = x.cache[$(rl...), r[$D] - x.lo[$D] + 1]
         return v
     end
-    println(ex)
     return ex
 end
 

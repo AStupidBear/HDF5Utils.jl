@@ -44,11 +44,10 @@ h5concat_bigdata("concat.h5", repeat(["test.h5"], 100), npart = 10, dim = 1, del
 h5concat_vds("concat.h5", repeat(["test.h5"], 100), dim = -2)
 @test h5load("concat.h5", virtual = true)["y"] == cat(repeat([data.y], 100)..., dims = 2)
 
-GC.gc(true)
-h5open("test.h5", "w") do fid
+h5open("compress.h5", "w") do fid
     fid["x", "compress", 3] = [1 2; 3 4]
 end
-x = h5load("test.h5")["x"]
+x = h5load("compress.h5")["x"]
 @test sum(x) == 10
 
 GC.gc(true)
@@ -86,7 +85,7 @@ for d in 1:3
         sum(read(x.ds)), sumloop(x)
         t_cache = @elapsed s_cache = sumloop(x)
         t_read = @elapsed s_read = sum(read(x.ds))
-        @show size(x), size(x.cache), t_cache / t_read
+        @show n, d, t_cache / t_read
         @test s_read ≈ s_cache
     end
 end
