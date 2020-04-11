@@ -65,19 +65,30 @@ h5open("vds.h5", "w") do fid
 end
 @test h5load("vds.h5", virtual = true)["x"] ≈ hcat([h5load(h5, virtual = true)["x"] for h5 in glob("vds_*.h5")]...)
 
-x = 0; GC.gc(true)
-h5open("disk.h5", "w") do fid
-    fid["x", "chunk", (30, 30)] = rand(1000, 1000)
-end
-x = h5load("disk.h5")["x"]
-
 function sumloop(x)
     s = 0.0
-    for t in 1:size(x, 2), n in 1:size(x, 1)
-        s += x[n, t]
+    @inbounds for i in eachindex(x)
+        s += x[i]
     end
     return s
 end
-@time @test sumloop(x) ≈ sum(x)
+
+for d in 1:3
+    for n in (10, 100, 200, 500, 10^7)
+        GC.gc(true)
+        exp(d * log(n)) * 8 > 1024^3 && continue
+        h5open("disk_$(d)_$n.h5", "w") do fid
+            chunk = ntuple(i -> min(n, 100), d)
+            x = rand(fill(n, d)...)
+            fid["x", "chunk", chunk] = x
+        end
+        x = h5load("disk_$(d)_$n.h5")["x"]
+        sum(read(x.ds)), sumloop(x)
+        t_cache = @elapsed s_cache = sumloop(x)
+        t_read = @elapsed s_read = sum(read(x.ds))
+        @show size(x), size(x.cache), t_cache / t_read
+        @test s_read ≈ s_cache
+    end
+end
 
 foreach(rm, glob("*.h5"))
