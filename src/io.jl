@@ -27,23 +27,29 @@ function h5load(src, ::Type{T}; mode = "r", mmaparrays = true, virtual = false) 
         if ft <: AbstractArray
             x = string(s) ∈ names(fid) ? r(fid[string(s)]) :
                 zeros(ft.parameters[1], ntuple(i -> 0, ft.parameters[2]))
-            else
-                x = ft(read_nonarray(fid, string(s)))
-            end
-            push!(o, x)
+        else
+            x = ft(read_nonarray(fid, string(s)))
         end
-        obj = T(o...)
-        finalizer(x -> HDF5.h5_garbage_collect(), obj)
-        return obj
+        push!(o, x)
     end
-    
-function h5load(src; mode = "r", mmaparrays = true, virtual = false)
-    @eval GC.gc(true)
-    fid = (virtual ? h5open_weak : h5open)(src, mode)
-    obj = !Sys.iswindows() && mmaparrays ? tryreadmmap(fid) : read(fid)
+    obj = T(o...)
     finalizer(x -> HDF5.h5_garbage_collect(), obj)
     return obj
 end
+
+function h5load(src, paths = nothing; mode = "r", mmaparrays = true, virtual = false)
+    @eval GC.gc(true)
+    fid = (virtual ? h5open_weak : h5open)(src, mode)
+    if isnothing(paths)
+        obj = !Sys.iswindows() && mmaparrays ? tryreadmmap(fid) : read(fid)
+    elseif paths isa AbstractArray
+        obj = map(path -> tryreadmmap(fid[path]), paths)
+    end
+    finalizer(x -> HDF5.h5_garbage_collect(), obj)
+    return obj
+end
+
+h5load(src, path::AbstractString; ka...) = h5load(src, [path]; ka...)[1]
 
 function h5save(dst, obj::T; excludes = []) where T
     @eval GC.gc(true)
