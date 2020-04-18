@@ -28,7 +28,7 @@ mutable struct Data
     z::Dict{String, Int}
     w::String
 end
-data = Data(rand(Float32, 2, 2), rand(2, 2, 2), Dict("a" => 1), "abcd")
+data = Data(rand(Float32, 2, 3), rand(2, 3, 4), Dict("a" => 1), "abcd")
 h5save("test.h5", data)
 data′ = h5load("test.h5", Data)
 for s in fieldnames(Data)
@@ -38,11 +38,15 @@ end
 h5concat("concat.h5", repeat(["test.h5"], 100), dim = -2)
 @test h5load("concat.h5", Data).y == cat(repeat([data.y], 100)..., dims = 2)
 
-h5concat_bigdata("concat.h5", repeat(["test.h5"], 100), npart = 10, dim = 1, delete = true)
+h5merge("concat.h5", repeat(["test.h5"], 100), npart = 10, dim = 1, delete = true)
 @test h5load("concat.h5", Data).y == vcat(repeat([data.y], 100)...)
 
-h5concat_vds("concat.h5", repeat(["test.h5"], 100), dim = -2)
-@test h5load("concat.h5", virtual = true)["y"] == cat(repeat([data.y], 100)..., dims = 2)
+h5concat_vds("concat.h5", ["test.h5", "test.h5"], dims = -2)
+@test h5load("concat.h5", virtual = true)["y"] == repeat(data.y, outer = (1, 2, 1))
+
+srcs_list = [["test.h5", "test.h5"], ["test.h5"], ["test.h5", "test.h5", "test.h5"]]
+h5concat_vds2d("concat.h5", srcs_list, dims = (-2, -1))
+@test h5load("concat.h5", virtual = true)["x"] == [data.x data.x zero(data.x); data.x zero(data.x) zero(data.x); data.x data.x data.x]
 
 h5open("compress.h5", "w") do fid
     fid["x", "compress", 3] = [1 2; 3 4]

@@ -1,7 +1,7 @@
 h5p_set_virtual(dcpl_id, vspace_id, src_file_name, src_dset_name, src_space_id) = 
     ccall((:H5Pset_virtual, libhdf5), Herr, (Hid, Hid, Ptr{UInt8}, Ptr{UInt8}, Hid), dcpl_id, vspace_id, src_file_name, src_dset_name, src_space_id)
 
-struct VirtualLayout{S, D, SS}
+mutable struct VirtualLayout{S, D, SS}
     shape::S
     dtype::D
     sources::SS
@@ -11,7 +11,13 @@ VirtualLayout(shape, dtype) = VirtualLayout(tuple(shape...), dtype, [])
 
 repcolon(is, shape) = ifelse.(is .== Colon(), Base.OneTo.(shape), is)
 
-Base.setindex!(layout::VirtualLayout, v, is...) = push!(layout.sources, (repcolon(is, layout.shape), v))
+function Base.setindex!(layout::VirtualLayout, v, is...)
+    push!(layout.sources, (repcolon(is, layout.shape), v))
+    shape = collect(layout.shape)
+    for (vis, vs) in layout.sources
+        layout.shape = max.(layout.shape, last.(vis))
+    end
+end
 
 struct VirtualSource{P, N, S, D, I}
     path::P
