@@ -15,29 +15,21 @@ using HDF5: h5t_get_member_type, h5t_get_member_name, h5t_is_variable_str
 using HDF5: h5s_create, h5s_close, h5s_select_hyperslab, h5d_read, h5d_write, h5f_close
 using HDF5: hdf5_type_id, hdf5_to_julia, hdf5_to_julia_eltype, hyperslab
 using HDF5: Herr, Hid, Hsize, isnull, libhdf5, writearray, readarray, checkvalid, checkprops
-import DiskArrays: eachchunk, haschunks, readblock!, writeblock!, GridChunks, Chunked, Unchunked
 
-export HDF5DiskArray
 export d_zeros, copy_batch!, write_batch
 export read_nonarray, write_nonarray
 export h5load, h5loadv, h5save, h5readmmap, tryreadmmap
 export h5concat, h5concat!
 export MaxLenString, MLString
-export d_create_virtual, VirtualLayout, VirtualSource
-export enable_dag, disable_dag
 
-include("diskarrays.jl")
 include("util.jl")
 include("batch.jl")
 include("concat.jl")
 include("io.jl")
-include("alignment.jl")
 include("conversion.jl")
 include("mlstring.jl")
 include("namedtuple.jl")
 include("hyperslab.jl")
-include("virtual.jl")
-include("auto.jl")
 
 @init @require PyCall="438e738f-606a-5dbb-bf0a-cddfbfd45ab0" include("npystring.jl")
 

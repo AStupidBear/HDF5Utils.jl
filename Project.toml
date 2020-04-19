@@ -4,7 +4,6 @@ authors = ["Yao Lu <luyaocns@gmail.com>"]
 version = "0.1.23"
 
 [deps]
-DiskArrays = "3c3547ce-8d99-4f5e-a174-61eb10b00ae3"
 Distributed = "8ba89e20-285c-5b6f-9357-94700520ee1b"
 FillArrays = "1a297f60-69ca-5386-bcde-b61e274b549b"
 Glob = "c27321d9-0574-5035-807b-f59d2c89b15c"
@@ -15,7 +14,6 @@ Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 Requires = "ae029012-a4dd-5104-9daa-d747884805df"
 
 [compat]
-DiskArrays = "0.2"
 FillArrays = "0.7, 0.8"
 Glob = "1.2"
 HDF5 = "0.12, 0.13"
