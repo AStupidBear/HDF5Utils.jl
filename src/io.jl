@@ -1,4 +1,4 @@
-function h5open_weak(filename::AbstractString, mode::AbstractString="r", pv...; swmr=false)
+function HDF5.h5open(filename::AbstractString, mode::AbstractString="r", pv...; swmr=false, fclose_degree = H5F_CLOSE_STRONG, auto_fclose = true)
     checkprops(pv...)
     # pv is interpreted as pairs of arguments
     # the first of a pair is a key of hdf5_prop_get_set
@@ -6,6 +6,7 @@ function h5open_weak(filename::AbstractString, mode::AbstractString="r", pv...; 
     fapl = p_create(H5P_FILE_ACCESS, true, pv...) # file access property list
     # With garbage collection, the other modes don't make sense
     # (Set this first, so that the user-passed properties can overwrite this.)
+    fapl["fclose_degree"] = fclose_degree
     fcpl = p_create(H5P_FILE_CREATE, true, pv...) # file create property list
     modes =
         mode == "r"  ? (true,  false, false, false, false) :
@@ -15,12 +16,42 @@ function h5open_weak(filename::AbstractString, mode::AbstractString="r", pv...; 
         # mode == "w+" ? (true,  true,  true,  true,  false) :
         # mode == "a"  ? (true,  true,  true,  true,  true ) :
         error("invalid open mode: ", mode)
-    h5open(filename, modes..., fcpl, fapl; swmr=swmr)
+    if auto_fclose
+        try
+            disable_dag()
+            fid = h5open(filename, modes..., fcpl, fapl; swmr=swmr)
+            enable_dag()
+            fid
+        catch e
+            fapl["fclose_degree"] = H5F_CLOSE_DEFAULT
+            h5open(filename, modes..., fcpl, fapl; swmr=swmr)
+        end
+    else
+        h5open(filename, modes..., fcpl, fapl; swmr=swmr)
+    end
 end
 
-function h5load(src, ::Type{T}; mode = "r", mmaparrays = true, virtual = false) where T
+function HDF5.h5open(f::Function, args...; ka...)
+    fid = h5open(args...; ka...)
+    try
+        f(fid)
+    finally
+        close(fid)
+    end
+end
+
+function HDF5.close(obj::HDF5File)
+    if obj.id != -1
+        flush(obj)
+        h5f_close(obj.id)
+        obj.id = -1
+    end
+    nothing
+end
+
+function h5load(src, ::Type{T}, pv...; mode = "r", mmaparrays = true, ka...) where T
     @eval GC.gc(true)
-    fid = (virtual ? h5open_weak : h5open)(src, mode)
+    fid = h5open(src, mode, pv...; ka...)
     o, r = Any[], !Sys.iswindows() && mmaparrays ? tryreadmmap : read
     for s in fieldnames(T)
         ft = fieldtype(T, s)
@@ -37,9 +68,9 @@ function h5load(src, ::Type{T}; mode = "r", mmaparrays = true, virtual = false) 
     return obj
 end
 
-function h5load(src, paths = nothing; mode = "r", mmaparrays = true, virtual = false)
+function h5load(src, paths = nothing, pv...; mode = "r", mmaparrays = true, ka...)
     @eval GC.gc(true)
-    fid = (virtual ? h5open_weak : h5open)(src, mode)
+    fid = h5open(src, mode, pv...; ka...)
     if isnothing(paths)
         obj = !Sys.iswindows() && mmaparrays ? tryreadmmap(fid) : read(fid)
     elseif paths isa AbstractArray
@@ -49,13 +80,11 @@ function h5load(src, paths = nothing; mode = "r", mmaparrays = true, virtual = f
     return obj
 end
 
-h5load(src, path::AbstractString; ka...) = h5load(src, [path]; ka...)[1]
+h5load(src, path::AbstractString, pv...; ka...) = h5load(src, [path], pv...; ka...)[1]
 
-function h5save(dst, obj::T; excludes = []) where T
+function h5save(dst, obj::T, pv...; excludes = [], ka...) where T
     @eval GC.gc(true)
-    isfile(dst) && rm(dst)
-    isempty(dst) && error("dst is empty")
-    h5open(dst, "w", "alignment", (0, 8)) do fid
+    h5open(dst, "w", pv...; ka...) do fid
         for s in fieldnames(typeof(obj))
             s ∈ excludes && continue
             x = getfield(obj, s)
@@ -67,9 +96,10 @@ function h5save(dst, obj::T; excludes = []) where T
                 write_nonarray(fid, string(s), x)
             end
         end
-        flush(fid)
     end
     return dst
 end
 
-h5save(dst, dict::Dict) = h5open(f -> write(f, dict), dst, "w", "alignment", (0, 8))
+h5save(dst, dict::Dict, pv...; ka...) = h5open(fid -> write(fid, dict), dst, "w", pv...; ka...)
+
+h5loadv(a...; ka...) = h5load(a...; fclose_degree = H5F_CLOSE_DEFAULT, ka...)

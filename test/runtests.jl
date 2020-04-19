@@ -25,34 +25,35 @@ h5save("test.h5", dict)
 mutable struct Data
     x::Array{Float32, 2}
     y::Array{Float64, 3}
-    z::Dict{String, Int}
-    w::String
+    z::Array{Float64, 3}
+    a::Dict{String, Int}
+    b::String
 end
-data = Data(rand(Float32, 2, 3), rand(2, 3, 4), Dict("a" => 1), "abcd")
-h5save("test.h5", data)
-data′ = h5load("test.h5", Data)
+x = rand(Float32, 20, 30)
+y = rand(20, 30, 40)
+z = rand(20, 30, 40)
+data = Data(x, y, z, Dict("a" => 1), "abcd")
+h5save("data.h5", data)
+data′ = h5load("data.h5", Data)
 for s in fieldnames(Data)
     @test getfield(data, s) == getfield(data′, s)
 end
+data′ = 0
 
-h5concat("concat.h5", repeat(["test.h5"], 100), dim = -2)
-@test h5load("concat.h5", Data).y == cat(repeat([data.y], 100)..., dims = 2)
-
-h5merge("concat.h5", repeat(["test.h5"], 100), npart = 10, dim = 1, delete = true)
-@test h5load("concat.h5", Data).y == vcat(repeat([data.y], 100)...)
-
-h5concat_vds("concat.h5", ["test.h5", "test.h5"], dims = -2)
-@test h5load("concat.h5", virtual = true)["y"] == repeat(data.y, outer = (1, 2, 1))
-
-srcs_list = [["test.h5", "test.h5"], ["test.h5"], ["test.h5", "test.h5", "test.h5"]]
-h5concat_vds2d("concat.h5", srcs_list, dims = (-2, -1))
-@test h5load("concat.h5", virtual = true)["x"] == [data.x data.x zero(data.x); data.x zero(data.x) zero(data.x); data.x data.x data.x]
+for virtual in (false, true)
+    h5concat("concat.h5", ["data.h5", "data.h5"], dims = -2, virtual = virtual)
+    h5concat!("concat.h5", "q", r"y|z"; dims = 1, virtual = virtual)
+    @test h5loadv("concat.h5", "y") ≈ repeat(y, outer = (1, 2, 1))
+    @test h5loadv("concat.h5", "q") ≈ cat([repeat(a, outer = (1, 2, 1)) for a in (y, z)]..., dims = 1)
+    srcs_list = [["data.h5", "data.h5"], ["data.h5"], ["data.h5", "data.h5", "data.h5"]]
+    h5concat("concat2d.h5", srcs_list, dims = (-2, -1), virtual = virtual)
+    @test h5loadv("concat2d.h5", "x") ≈ [x x zero(x); x zero(x) zero(x); x x x]
+end
 
 h5open("compress.h5", "w") do fid
     fid["x", "compress", 3] = [1 2; 3 4]
 end
-x = h5load("compress.h5")["x"]
-@test sum(x) == 10
+@test sum(h5load("compress.h5", "x")) == 10
 
 GC.gc(true)
 h5open("vds.h5", "w") do fid
@@ -66,7 +67,7 @@ h5open("vds.h5", "w") do fid
     end
     d_create_virtual(fid, "x", layout)
 end
-@test h5load("vds.h5", "x", virtual = true) ≈ hcat([h5load(h5, "x", virtual = true) for h5 in glob("vds_*.h5")]...)
+@test h5loadv("vds.h5", "x") ≈ hcat([h5loadv(h5, "x") for h5 in glob("vds_*.h5")]...)
 
 function sumloop(x)
     s = 0.0
@@ -85,7 +86,7 @@ for d in 1:3
             x = rand(fill(n, d)...)
             fid["x", "chunk", chunk] = x
         end
-        x = h5load("disk_$(d)_$n.h5")["x"]
+        x = h5load("disk_$(d)_$n.h5", "x")
         sum(read(x.ds)), sumloop(x)
         t_cache = @elapsed s_cache = sumloop(x)
         t_read = @elapsed s_read = sum(read(x.ds))

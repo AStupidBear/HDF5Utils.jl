@@ -48,16 +48,24 @@ function select_hyperslab(dspace, is)
     return dspace
 end
 
-function d_create_virtual(parent::Union{HDF5File, HDF5Group}, name::String, layout)
+function d_create_virtual(parent::Union{HDF5File, HDF5Group}, name::String, layout, virtual = true)
     checkvalid(parent)
     dcpl = p_create(H5P_DATASET_CREATE)
     dspace = dataspace(layout.shape)
     dtype = datatype(layout.dtype)
-    for (is, vs) in layout.sources
-        src_dspace = dataspace(vs.shape)
-        select_hyperslab(dspace, is)
-        select_hyperslab(src_dspace, vs.is)
-        h5p_set_virtual(dcpl, dspace, vs.path, vs.name, src_dspace)
+    if virtual
+        for (is, vs) in layout.sources
+            src_dspace = dataspace(vs.shape)
+            select_hyperslab(dspace, is)
+            select_hyperslab(src_dspace, vs.is)
+            h5p_set_virtual(dcpl, dspace, vs.path, vs.name, src_dspace)
+        end
+        d_create(parent, name, dtype, dspace, HDF5Properties(), dcpl)
+    else
+        d_create(parent, name, dtype, dspace, HDF5Properties(), dcpl)
+        for (is, vs) in layout.sources
+            vsis = something(vs.is, ntuple(i -> (:), length(vs.shape)))
+            parent[name][is...] = h5read(vs.path, vs.name, vsis)
+        end
     end
-    d_create(parent, name, dtype, dspace, HDF5Properties(), dcpl)
 end

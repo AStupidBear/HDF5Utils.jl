@@ -8,7 +8,7 @@ using FillArrays: Zeros, Fill
 using HDF5: HDF5Dataset, DatasetOrAttribute
 using HDF5: H5T_COMPOUND, H5T_STRING, H5T_CSET_UTF8
 using HDF5: H5P_FILE_ACCESS, H5P_FILE_CREATE, H5P_DEFAULT, H5P_DATASET_CREATE
-using HDF5: H5S_ALL, H5S_SELECT_SET, H5S_SCALAR, H5F_CLOSE_STRONG
+using HDF5: H5S_ALL, H5S_SELECT_SET, H5S_SCALAR, H5F_CLOSE_STRONG, H5F_CLOSE_DEFAULT
 using HDF5: h5t_create, h5t_insert, h5t_close, h5t_copy, h5t_get_size, h5t_set_size
 using HDF5: h5t_get_cset, h5t_set_cset, h5t_get_class, h5t_get_nmembers
 using HDF5: h5t_get_member_type, h5t_get_member_name, h5t_is_variable_str
@@ -20,8 +20,8 @@ import DiskArrays: eachchunk, haschunks, readblock!, writeblock!, GridChunks, Ch
 export HDF5DiskArray
 export d_zeros, copy_batch!, write_batch
 export read_nonarray, write_nonarray
-export h5load, h5save, h5readmmap, tryreadmmap
-export h5concat, h5merge, h5concat_vds, h5concat_vds2d
+export h5load, h5loadv, h5save, h5readmmap, tryreadmmap
+export h5concat, h5concat!
 export MaxLenString, MLString
 export d_create_virtual, VirtualLayout, VirtualSource
 export enable_dag, disable_dag
