@@ -2,6 +2,7 @@ using HDF5Utils
 using HDF5
 using Glob
 using Test
+using Revise
 
 cd(mktempdir())
 
@@ -11,7 +12,7 @@ dict = Dict(
     "nt" => (α = 1, β = 2, γ = s3"β"),
     "longstr" => string(rand(100)),
     "arr[uint8]" => zeros(UInt8, 7),
-    "arr[mlstr]" => MLString{5}["α" "β"; "γ" "δ"],
+    "arr[mlstr]" => MLString{16}["α" "β"; "γ" "δ"] |> vec,
     "arr[nt]" => repeat([(a = 1, b = s4"α", c = 1f0)], 2),
     "group" => Dict(
         "arr[float32]" => zeros(Float32, 10),
@@ -20,6 +21,7 @@ dict = Dict(
     )
 h5save("test.h5", dict)
 @test h5open(read, "test.h5") == dict
+@test h5open(tryreadmmap, "test.h5") == dict
 @test h5load("test.h5") == dict
 
 mutable struct Data
