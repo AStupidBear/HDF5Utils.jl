@@ -1,5 +1,9 @@
 # Extensions to HDF5.jl
 
+[![Build Status](https://travis-ci.com/AStupidBear/HDF5Utils.jl.svg?branch=master)](https://travis-ci.com/AStupidBear/HDF5Utils.jl)
+[![Build Status](https://ci.appveyor.com/api/projects/status/github/AStupidBear/HDF5Utils.jl?svg=true)](https://ci.appveyor.com/project/AStupidBear/HDF5Utils-jl)
+[![Coverage](https://codecov.io/gh/AStupidBear/HDF5Utils.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/AStupidBear/HDF5Utils.jl)
+
 ## Installation
 
 ```jl
