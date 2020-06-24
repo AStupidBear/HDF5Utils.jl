@@ -16,11 +16,11 @@ function MaxLenString{N}(s::AbstractString) where N
 end
 
 function Base.convert(::Type{String}, s::MaxLenString)
-    p = pointer(collect(s.data))
-    if s.data[end] == 0x00
-        unsafe_string(p)
+    v = collect(s.data)
+    GC.@preserve v if s.data[end] == 0x00
+        unsafe_string(pointer(v))
     else
-        unsafe_string(p, sizeof(s))
+        unsafe_string(pointer(v), sizeof(s))
     end
 end
 
