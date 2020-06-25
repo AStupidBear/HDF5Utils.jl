@@ -2,7 +2,6 @@ using HDF5Utils
 using HDF5
 using Glob
 using Test
-using Revise
 
 cd(mktempdir())
 
