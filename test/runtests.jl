@@ -68,6 +68,8 @@ h5open("vds.h5", "w") do fid
     end
     d_create_virtual(fid, "x", layout)
 end
+h5concat("vdscat.h5", ["vds_$i.h5" for i in 1:5], dims = -1)
+@test h5loadv("vdscat.h5", "x") ≈ hcat([h5loadv(h5, "x") for h5 in glob("vds_*.h5")]...)
 @test h5loadv("vds.h5", "x") ≈ hcat([h5loadv(h5, "x") for h5 in glob("vds_*.h5")]...)
 
 function sumloop(x)

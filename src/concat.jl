@@ -18,14 +18,13 @@ function _h5concat2d(dst, srcs_list, pv...; dims, virtual = true, ka...)
                         if j == 1
                             pos[1] = dims′[1] == 0 ? 0 : layout.shape[dims′[1]]
                             pos[2] = 0
-                        else
-                            pos[2] += vs.shape[dims′[2]]
                         end
                         layout.dtype = promote_type(eltype(fidn[c]), layout.dtype)
                         starts = ntuple(ndims(fidn[c])) do d
                             d == dims′[1] ? pos[1] : d == dims′[2] ? pos[2] : 0
                         end
                         layout[[(1:vs.shape[i]) .+ starts[i] for i in 1:ndims(fidn[c])]...] = vs
+                        pos[2] += vs.shape[dims′[2]]
                     elseif !has(fid, c)
                         o_copy(fidn[c], fid, c)
                     end
