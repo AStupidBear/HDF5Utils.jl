@@ -99,4 +99,4 @@ for d in 1:3
     end
 end
 
-foreach(rm, glob("*.h5"))
+!Sys.iswindows() && foreach(rm, glob("*.h5"))
