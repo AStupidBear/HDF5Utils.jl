@@ -41,14 +41,15 @@ for s in fieldnames(Data)
 end
 data′ = 0
 
-for virtual in (false, true)
-    h5concat("concat.h5", ["data.h5", "data.h5"], dims = -2, virtual = virtual)
-    h5concat!("concat.h5", "q", r"y|z"; dims = 1, virtual = virtual)
-    @test h5loadv("concat.h5", "y") ≈ repeat(y, outer = (1, 2, 1))
-    @test h5loadv("concat.h5", "q") ≈ cat([repeat(a, outer = (1, 2, 1)) for a in (y, z)]..., dims = 1)
+for v in (false, true)
+    file = "vconcat_$v.h5"
+    h5concat("vconcat_$v.h5", ["data.h5", "data.h5"], dims = -2, virtual = v)
+    h5concat!("vconcat_$v.h5", "q", r"y|z"; dims = 1, virtual = v)
+    @test h5loadv("vconcat_$v.h5", "y") ≈ repeat(y, outer = (1, 2, 1))
+    @test h5loadv("vconcat_$v.h5", "q") ≈ cat([repeat(a, outer = (1, 2, 1)) for a in (y, z)]..., dims = 1)
     srcs_list = [["data.h5", "data.h5"], ["data.h5"], ["data.h5", "data.h5", "data.h5"]]
-    h5concat("concat2d.h5", srcs_list, dims = (-2, -1), virtual = virtual)
-    @test h5loadv("concat2d.h5", "x") ≈ [x x zero(x); x zero(x) zero(x); x x x]
+    h5concat("vconcat2d_$v.h5", srcs_list, dims = (-2, -1), virtual = v)
+    @test h5loadv("vconcat2d_$v.h5", "x") ≈ [x x zero(x); x zero(x) zero(x); x x x]
 end
 
 h5open("compress.h5", "w") do fid
