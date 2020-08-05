@@ -74,7 +74,7 @@ function h5load(src, paths = nothing, pv...; mode = "r", mmaparrays = true, ka..
     if isnothing(paths)
         obj = !Sys.iswindows() && mmaparrays ? tryreadmmap(fid) : read(fid)
     elseif paths isa AbstractArray
-        obj = map(path -> tryreadmmap(fid[path]), paths)
+        obj = Dict(path -> tryreadmmap(fid[path]) for path in paths)
     end
     finalizer(x -> HDF5.h5_garbage_collect(), obj)
     return obj
