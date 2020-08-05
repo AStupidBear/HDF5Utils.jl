@@ -82,11 +82,11 @@ end
 
 h5load(src, path::AbstractString, pv...; ka...) = h5load(src, [path], pv...; ka...)[1]
 
-function h5save(dst, obj::T, pv...; excludes = [], ka...) where T
+function h5save(dst, obj::T, pv...; exclude = [], ka...) where T
     @eval GC.gc(true)
     h5open(dst, "w", pv...; ka...) do fid
         for s in fieldnames(typeof(obj))
-            s ∈ excludes && continue
+            s ∈ exclude && continue
             x = getfield(obj, s)
             if isa(x, AbstractArray)
                 write_batch(fid, string(s), x)
