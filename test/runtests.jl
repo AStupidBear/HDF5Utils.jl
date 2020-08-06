@@ -52,10 +52,14 @@ for v in (false, true)
     @test h5loadv("vconcat2d_$v.h5", "x") ≈ [x x zero(x); x zero(x) zero(x); x x x]
 end
 
-h5open("compress.h5", "w") do fid
-    fid["x", "compress", 3] = [1 2; 3 4]
+h5open("diskarray.h5", "w") do fid
+    x = rand(10, 9, 8, 7)
+    fid["x", "compress", 3] = x
+    x′ = HDF5DiskArray(fid["x"])
+    @test Array(x′) == x
+    @test reshape(x′, 10, 8, 9, 7) == reshape(x, 10, 8, 9, 7)
+    @test reshape(x′, 7, 8, 9, 10) == reshape(x, 7, 8, 9, 10)
 end
-@test sum(h5load("compress.h5", "x")) == 10
 
 GC.gc(true)
 h5open("vds.h5", "w") do fid

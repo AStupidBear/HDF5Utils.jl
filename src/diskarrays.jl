@@ -56,7 +56,7 @@ end
     rr = [:(r[$d]) for d in (D + 1):N]
     cond = :(r[$D] < x.lo[$D] || r[$D] > x.hi[$D])
     for d in (D + 1):N
-        cond = :($cond || r[$d] != x.is[$d])
+        cond = :($cond || r[$d] != x.lo[$d])
     end
     ex = quote
         @inbounds if $cond
@@ -76,3 +76,7 @@ Base.getindex(x::HDF5DiskArray, r::Integer...) = _getindex(x, r...)
 Base.getindex(x::HDF5DiskArray, i::Integer) =  getindex(x, CartesianIndices(x)[i])
 
 Base.getindex(x::HDF5DiskArray{T, 1}, i::Integer) where T = _getindex(x, i)
+
+Base._reshape(x::HDF5DiskArray, dims::NTuple{N, Int}) where N = Base.__reshape((x, IndexStyle(x)), dims)
+
+Base.Array(x::HDF5DiskArray) = read(x.ds)
