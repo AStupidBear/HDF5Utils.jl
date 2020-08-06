@@ -3,11 +3,11 @@ function HDF5.h5open(filename::AbstractString, mode::AbstractString="r", pv...; 
     # pv is interpreted as pairs of arguments
     # the first of a pair is a key of hdf5_prop_get_set
     # the second of a pair is a property value
-    fapl = p_create(H5P_FILE_ACCESS, true, pv...) # file access property list
+    fapl = p_create(H5P_FILE_ACCESS, pv...) # file access property list
     # With garbage collection, the other modes don't make sense
     # (Set this first, so that the user-passed properties can overwrite this.)
     fapl["fclose_degree"] = fclose_degree
-    fcpl = p_create(H5P_FILE_CREATE, true, pv...) # file create property list
+    fcpl = p_create(H5P_FILE_CREATE, pv...) # file create property list
     modes =
         mode == "r"  ? (true,  false, false, false, false) :
         mode == "r+" ? (true,  true,  false, false, true ) :
@@ -74,13 +74,13 @@ function h5load(src, paths = nothing, pv...; mode = "r", mmaparrays = true, ka..
     if isnothing(paths)
         obj = !Sys.iswindows() && mmaparrays ? tryreadmmap(fid) : read(fid)
     elseif paths isa AbstractArray
-        obj = Dict(path -> tryreadmmap(fid[path]) for path in paths)
+        obj = Dict(path => tryreadmmap(fid[path]) for path in paths)
     end
     finalizer(x -> HDF5.h5_garbage_collect(), obj)
     return obj
 end
 
-h5load(src, path::AbstractString, pv...; ka...) = h5load(src, [path], pv...; ka...)[1]
+h5load(src, path::AbstractString, pv...; ka...) = h5load(src, [path], pv...; ka...)[path]
 
 function h5save(dst, obj::T, pv...; exclude = [], ka...) where T
     @eval GC.gc(true)
