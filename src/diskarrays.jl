@@ -80,3 +80,5 @@ Base.getindex(x::HDF5DiskArray{T, 1}, i::Integer) where T = _getindex(x, i)
 Base._reshape(x::HDF5DiskArray, dims::NTuple{N, Int}) where N = Base.__reshape((x, IndexStyle(x)), dims)
 
 Base.Array(x::HDF5DiskArray) = read(x.ds)
+
+Base.getindex(x::HDF5DiskArray{T, N}, is::Vararg{Union{AbstractVector, Colon}, N}) where {T, N} = getindex(x.ds, is...)

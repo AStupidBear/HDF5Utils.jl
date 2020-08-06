@@ -59,6 +59,7 @@ h5open("diskarray.h5", "w") do fid
     @test Array(x′) == x
     @test reshape(x′, 10, 8, 9, 7) == reshape(x, 10, 8, 9, 7)
     @test reshape(x′, 7, 8, 9, 10) == reshape(x, 7, 8, 9, 10)
+    @assert x′[:, :, 1, 1] == x′[:, :, 1, 1]
 end
 
 GC.gc(true)
