@@ -44,9 +44,8 @@ function HDF5DiskArray(ds::HDF5Dataset)
     else
         R = min(ceil(Int, get_cache_size(ds) / strides[D - 1]), size(ds, D))
     end
-    lo, hi = ntuple(one, N), ntuple(d -> d == D ? R : 1, N)
-    cache = ds[fill(:, D - 1)..., 1:R, fill(1, N - D)...]
-    cache = reshape(cache, size(ds)[1:(D - 1)]..., R)
+    lo, hi = ntuple(zero, N), ntuple(zero, N)
+    cache = zeros(T, size(ds)[1:(D - 1)]..., 0)
     HDF5DiskArray{T, N, C, D, R}(ds, cs, lo, hi, cache)
 end
 
