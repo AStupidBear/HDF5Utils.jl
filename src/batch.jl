@@ -14,12 +14,13 @@ function copy_batch!(dest, src; desc = "copy_batch: ")
     nbatch = ceil(Int,  mem / 1024^2 / batchmem)
     batchsize = ceil(Int, size(src, dmax) / nbatch)
     slices = collect(indbatch(1:size(src, dmax), batchsize))
-    p = Progress(length(slices), desc = desc)
+    prog = Progress(length(slices), desc = desc)
     flag = isa(dest, AbstractArray)
+    verbose = parse(Int, get(ENV, "HDF5_PROGRESS", "1"))
     @pthreads flag for slice in slices
         is = ntuple(d -> d == dmax ? slice : (:), ndims(src))
         dest[is...] = convert(Array, src[is...])
-        next!(p)
+        verbose && next!(prog)
     end
     return dest
 end

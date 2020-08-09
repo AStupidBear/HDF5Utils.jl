@@ -3,7 +3,9 @@ function _h5concat2d(dst, srcs_list, pv...; dims, virtual = true, ka...)
     @eval GC.gc(true)
     h5open(dst, "w", pv...; ka...) do fid
         layout_map, pos_map = Dict(), Dict()
-        @showprogress "h5concat.config: " for (i, srcs) in enumerate(srcs_list)
+        prog = Progress(length(srcs_list), desc = "h5concat.config: ")
+        verbose = parse(Int, get(ENV, "HDF5_PROGRESS", "1"))
+        for (i, srcs) in enumerate(srcs_list)
             for (j, src) in enumerate(srcs)
                 fidn = h5open(src, "r", pv...; ka...)
                 for c in names(fidn)
@@ -35,6 +37,7 @@ function _h5concat2d(dst, srcs_list, pv...; dims, virtual = true, ka...)
         for c in keys(layout_map)
             d_create_virtual(fid, c, layout_map[c])
         end
+        verbose && next!(prog)
     end
     return dst
 end
