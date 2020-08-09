@@ -20,7 +20,7 @@ function copy_batch!(dest, src; desc = "copy_batch: ")
     @pthreads flag for slice in slices
         is = ntuple(d -> d == dmax ? slice : (:), ndims(src))
         dest[is...] = convert(Array, src[is...])
-        verbose && next!(prog)
+        verbose == 1 && next!(prog)
     end
     return dest
 end
