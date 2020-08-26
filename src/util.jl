@@ -10,12 +10,16 @@ HDF5.readmmap(f::Union{HDF5File, HDF5Group}) = Dict(s => readmmap(f[s]) for s in
 
 function tryreadmmap(obj::HDF5Dataset)
     T = hdf5_to_julia(obj)
-    if ismmappable(T) && iscontiguous(obj)
-        readmmap(obj, T)
-    elseif T <: AbstractArray
+    try
+        if ismmappable(T) && iscontiguous(obj)
+            readmmap(obj, T)
+        elseif T <: AbstractArray
+            HDF5DiskArray(obj)
+        else
+            read(obj, T)
+        end
+    catch e
         HDF5DiskArray(obj)
-    else
-        read(obj, T)
     end
 end
 
