@@ -16,7 +16,7 @@ Requires = "ae029012-a4dd-5104-9daa-d747884805df"
 
 [compat]
 DiskArrays = "0.2"
-FillArrays = "0.7, 0.8"
+FillArrays = "0.7, 0.8, 0.9"
 Glob = "1.2"
 HDF5 = "0.13.3"
 ProgressMeter = "1"
