@@ -41,6 +41,4 @@ include("auto.jl")
 
 @init @require PyCall="438e738f-606a-5dbb-bf0a-cddfbfd45ab0" include("npystring.jl")
 
-@init @static Sys.ARCH == :aarch64 && @eval Mmap PAGESIZE = ccall(:jl_getpagesize, Clong, ())
-
 end # module
