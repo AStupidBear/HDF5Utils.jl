@@ -57,7 +57,7 @@ function h5load(src, ::Type{T}, pv...; mode = "r", mmaparrays = true, ka...) whe
         ft = fieldtype(T, s)
         x = if ft <: AbstractArray
             if string(s) ∈ names(fid)
-                !Sys.iswindows() && mmaparrays ? tryreadmmap(fid) : read(fid)
+                !Sys.iswindows() && mmaparrays ? tryreadmmap(fid[string(s)]) : read(fid[string(s)])
             else
                 zeros(ft.parameters[1], ntuple(i -> 0, ft.parameters[2]))
             end
