@@ -49,17 +49,20 @@ function HDF5.close(obj::HDF5File)
     nothing
 end
 
-function h5load(src, ::Type{T}, pv...; mode = "r", ka...) where T
+function h5load(src, ::Type{T}, pv...; mode = "r", mmaparrays = true, ka...) where T
     @eval GC.gc(true)
     fid = h5open(src, mode, pv...; ka...)
     os = Any[]
     for s in fieldnames(T)
         ft = fieldtype(T, s)
-        if ft <: AbstractArray
-            x = string(s) ∈ names(fid) ? tryreadmmap(fid[string(s)]) :
+        x = if ft <: AbstractArray
+            if string(s) ∈ names(fid)
+                !Sys.iswindows() && mmaparrays ? tryreadmmap(fid) : read(fid)
+            else
                 zeros(ft.parameters[1], ntuple(i -> 0, ft.parameters[2]))
+            end
         else
-            x = ft(read_nonarray(fid, string(s)))
+            ft(read_nonarray(fid, string(s)))
         end
         push!(os, x)
     end
