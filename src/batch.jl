@@ -48,6 +48,8 @@ function write_batch(parent, name, data, a...)
     end
 end
 
+write_batch(parent, dict::AbstractDict, a...) = for (k, v) in dict write_batch(parent, k, v, a...) end
+
 read_nonarray(fid, s) = eval(Meta.parse(String(read(fid["nonarray"][s]))))
 
 function write_nonarray(fid, s, x)
