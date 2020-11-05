@@ -85,24 +85,29 @@ end
 
 h5load(src, path::AbstractString, pv...; ka...) = h5load(src, [path], pv...; ka...)[path]
 
-function h5save(dst, obj::T, pv...; exclude = [], ka...) where T
+function h5save(dst, obj, pv...; exclude = [], ka...)
     @eval GC.gc(true)
     h5open(dst, "w", pv...; ka...) do fid
-        for s in fieldnames(typeof(obj))
-            s ∈ exclude && continue
-            x = getfield(obj, s)
-            if isa(x, AbstractArray)
-                write_batch(fid, string(s), x)
-            elseif isa(x, HDF5Dataset)
-                HDF5.create_external(fid, s, filename(x), name(x))
-            else
-                write_nonarray(fid, string(s), x)
+        if obj isa AbstractDict
+            for (k, v) in obj
+                k ∈ exclude && continue
+                write_batch(fid, k, v)
+            end
+        else
+            for s in propertynames(obj)
+                s ∈ exclude && continue
+                x = getproperty(obj, s)
+                if isa(x, AbstractArray)
+                    write_batch(fid, string(s), x)
+                elseif isa(x, HDF5Dataset)
+                    HDF5.create_external(fid, s, filename(x), name(x))
+                else
+                    write_nonarray(fid, string(s), x)
+                end
             end
         end
     end
     return dst
 end
-
-h5save(dst, dict::Dict, pv...; ka...) = h5open(fid -> write(fid, dict), dst, "w", pv...; ka...)
 
 h5loadv(a...; ka...) = h5load(a...; fclose_degree = H5F_CLOSE_DEFAULT, ka...)
