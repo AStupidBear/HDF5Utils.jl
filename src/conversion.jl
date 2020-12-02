@@ -1,8 +1,9 @@
 function HDF5.hdf5_to_julia_eltype(objtype::HDF5Datatype)
     class_id = h5t_get_class(objtype.id)
     if class_id == H5T_STRING
-        if !h5t_is_variable_str(objtype.id)
-            n = Int(h5t_get_size(objtype.id))
+        isvar = h5t_is_variable_str(objtype.id)
+        n = Int(h5t_get_size(objtype.id))
+        if !isvar && n < parse(Int, get(ENV, "HDF5_MAX_STRLEN", "256"))
             ENV["CSET"] = h5t_get_cset(objtype.id)
             return MaxLenString{n}
         end
