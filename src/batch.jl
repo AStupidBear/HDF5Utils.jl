@@ -37,7 +37,7 @@ end
 function write_batch(parent, name, data, a...)
     has(parent, name) && o_delete(parent, name)
     T, dims = eltype(data), size(data)
-    if Threads.nthreads() > 1
+    if Threads.nthreads() > 1 && !any(in(("chunk", "compress", "blosc")), a)
         dset = d_zeros(parent, name, T, dims, a...)
         arr = readmmap(dset)
         copy_batch!(arr, data, desc = "write.$name ")
