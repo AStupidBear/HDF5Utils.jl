@@ -15,7 +15,7 @@ function copy_batch!(dest, src; desc = "copy_batch: ")
     batchsize = ceil(Int, size(src, dmax) / nbatch)
     slices = collect(indbatch(1:size(src, dmax), batchsize))
     prog = Progress(length(slices), desc = desc)
-    flag = isa(dest, AbstractArray)
+    flag = isa(dest, AbstractArray) && get(ENV, "HDF5_USE_THREADS", "0") == "1"
     verbose = parse(Int, get(ENV, "HDF5_PROGRESS", "1"))
     @pthreads flag for slice in slices
         is = ntuple(d -> d == dmax ? slice : (:), ndims(src))
@@ -37,7 +37,8 @@ end
 function write_batch(parent, name, data, a...)
     has(parent, name) && o_delete(parent, name)
     T, dims = eltype(data), size(data)
-    if Threads.nthreads() > 1 && !any(in(("chunk", "compress", "blosc")), a)
+    if get(ENV, "HDF5_USE_THREADS", "0") == "1" &&
+        !any(in(("chunk", "compress", "blosc")), a)
         dset = d_zeros(parent, name, T, dims, a...)
         arr = readmmap(dset)
         copy_batch!(arr, data, desc = "write.$name ")
