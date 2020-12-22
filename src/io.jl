@@ -71,15 +71,15 @@ function h5load(src, ::Type{T}, pv...; mode = "r", mmaparrays = true, ka...) whe
     return obj
 end
 
-function h5load(src, paths = nothing, pv...; mode = "r", mmaparrays = true, ka...)
-    @eval GC.gc(true)
+function h5load(src, paths = nothing, pv...; mode = "r", mmaparrays = true, gc = false, ka...)
+    gc && @eval GC.gc(true)
     fid = h5open(src, mode, pv...; ka...)
     if isnothing(paths)
         obj = !Sys.iswindows() && mmaparrays ? tryreadmmap(fid) : read(fid)
     elseif paths isa AbstractArray
         obj = Dict(path => tryreadmmap(fid[path]) for path in paths)
     end
-    finalizer(x -> HDF5.h5_garbage_collect(), obj)
+    gc && Threads.nthreads() == 1 && finalizer(x -> HDF5.h5_garbage_collect(), obj)
     return obj
 end
 
