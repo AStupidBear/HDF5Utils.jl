@@ -49,8 +49,8 @@ function HDF5.close(obj::HDF5File)
     nothing
 end
 
-function h5load(src, ::Type{T}, pv...; mode = "r", mmaparrays = true, ka...) where T
-    @eval GC.gc(true)
+function h5load(src, ::Type{T}, pv...; mode = "r", mmaparrays = true, gc = false, ka...) where T
+    gc && @eval GC.gc(true)
     fid = h5open(src, mode, pv...; ka...)
     os = Any[]
     for s in fieldnames(T)
@@ -67,7 +67,7 @@ function h5load(src, ::Type{T}, pv...; mode = "r", mmaparrays = true, ka...) whe
         push!(os, x)
     end
     obj = T(os...)
-    finalizer(x -> HDF5.h5_garbage_collect(), obj)
+    gc && Threads.nthreads() == 1 && finalizer(x -> HDF5.h5_garbage_collect(), obj)
     return obj
 end
 
