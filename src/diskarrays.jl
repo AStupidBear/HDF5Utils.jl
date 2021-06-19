@@ -13,9 +13,27 @@ haschunks(x::HDF5DiskArray) = Unchunked()
 
 eachchunk(x::HDF5DiskArray{<:Any, <:Any, <:GridChunks}) = x.cs
 
-readblock!(x::HDF5DiskArray, aout, r::AbstractUnitRange...) = aout .= x.ds[r...]
+readblock!(x::HDF5DiskArray, aout, r::OrdinalRange...) = aout .= x.ds[r...]
 
-writeblock!(x::HDF5DiskArray, v, r::AbstractUnitRange...) = x.ds[r...] = v
+function readblock!(A::HDF5DiskArray, A_ret, r::AbstractVector...)
+    r′ = map(i -> i isa OrdinalRange ? i : minimum(i):maximum(i), r)
+    r′′ = map(i -> i isa OrdinalRange ? (:) : i .- i[1] .+ 1, r)
+    A_temp = similar(A_ret, length.(r′))
+    readblock!(A, A_temp, r′...)
+    A_ret .= view(A_temp, r′′...)
+    nothing
+end
+
+writeblock!(x::HDF5DiskArray, v, r::OrdinalRange...) = x.ds[r...] = v
+
+function writeblock!(A::HDF5DiskArray, A_ret, r::AbstractVector...)
+    r′ = map(i -> i isa OrdinalRange ? i : minimum(i):maximum(i), r)
+    r′′ = map(i -> i isa OrdinalRange ? (:) : i .- i[1] .+ 1, r)
+    A_temp = similar(A_ret, length.(r′))
+    A_temp[r′′...] = A_ret
+    writeblock!(A, A_temp, r′...)
+    nothing
+end
 
 const _cache_size = Ref(10 * 1024^2)
 
@@ -79,5 +97,3 @@ Base.getindex(x::HDF5DiskArray{T, 1}, i::Integer) where T = _getindex(x, i)
 Base._reshape(x::HDF5DiskArray, dims::NTuple{N, Int}) where N = Base.__reshape((x, IndexStyle(x)), dims)
 
 Base.Array(x::HDF5DiskArray) = read(x.ds)
-
-Base.getindex(x::HDF5DiskArray{T, N}, is::Vararg{Union{AbstractVector, Colon}, N}) where {T, N} = getindex(x.ds, is...)
