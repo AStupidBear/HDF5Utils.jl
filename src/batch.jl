@@ -34,7 +34,9 @@ function d_zeros(parent, path, T, dims, a...)
     return dset
 end
 
-function write_batch(parent, name, data, a...)
+write_batch(parent, name, data, a...) = parent[name, a...] = data
+
+function write_batch(parent, name, data::AbstractArray, a...)
     has(parent, name) && o_delete(parent, name)
     T, dims = eltype(data), size(data)
     if get(ENV, "HDF5_USE_THREADS", "0") == "1" &&

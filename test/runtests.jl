@@ -106,4 +106,18 @@ for d in 1:3
     end
 end
 
+h5open("attrs.h5", "w") do fid
+    fid["x"] = [1]
+    fid["y"] = "aaaaaaaa"
+    attrs(fid["x"])["name"] = "abc"
+end
+
+h5open("attrs.h5", "r") do fid
+    @test read(fid["y"]) == "aaaaaaaa"
+    a = attrs(fid["x"])["name"]
+    @test read(a, String) == "abc"
+    @test read(a) == "abc"
+    @test read(a) isa MLString
+end
+
 !Sys.iswindows() && foreach(rm, glob("*.h5"))
