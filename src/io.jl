@@ -62,7 +62,8 @@ function h5load(src, ::Type{T}, pv...; mode = "r", mmaparrays = true, gc = false
                 zeros(ft.parameters[1], ntuple(i -> 0, ft.parameters[2]))
             end
         else
-            convert(ft, read_nonarray(fid, string(s)))
+            x = read_nonarray(fid, string(s))
+            x = try ft(x) catch e x end
         end
         push!(os, x)
     end
