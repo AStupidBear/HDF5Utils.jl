@@ -35,7 +35,7 @@ function _h5concat2d(dst, srcs_list, pv...; dims, virtual = true, ka...)
             end
         end
         for c in keys(layout_map)
-            d_create_virtual(fid, c, layout_map[c])
+            d_create_virtual(fid, c, layout_map[c], virtual)
         end
         verbose == 1 && next!(prog)
     end
