@@ -4,6 +4,9 @@ mutable struct HDF5DiskArray{T, N, C, D, R} <: AbstractDiskArray{T, N}
     lo::NTuple{N, Int}
     hi::NTuple{N, Int}
     cache::Array{T, D}
+    blklo::NTuple{N, Int}
+    blkhi::NTuple{N, Int}
+    blkcache::Array{T}
 end
 
 Base.size(x::HDF5DiskArray{T, N}) where {T, N} = size(x.ds)::NTuple{N, Int}
@@ -18,11 +21,11 @@ readblock!(x::HDF5DiskArray, aout, r::OrdinalRange...) = aout .= x.ds[r...]
 function readblock!(x::HDF5DiskArray, aout, r::AbstractUnitRange...)
     lo = minimum.(r)
     hi = maximum.(r)
-    if x.lo != lo || x.hi != hi
-        x.lo, x.hi = lo, hi
-        x.cache = x.ds[r...]
+    if x.blklo != lo || x.blkhi != hi || size(x.blkcache) != size(aout)
+        x.blklo, x.blkhi = lo, hi
+        x.blkcache = x.ds[r...]
     end
-    aout .= x.cache
+    aout .= x.blkcache
 end
 
 function readblock!(A::HDF5DiskArray, A_ret, r::AbstractVector...)
@@ -74,7 +77,7 @@ function HDF5DiskArray(ds::HDF5Dataset)
     end
     lo, hi = ntuple(zero, N), ntuple(zero, N)
     cache = zeros(T, size(ds)[1:(D - 1)]..., 0)
-    HDF5DiskArray{T, N, C, D, R}(ds, cs, lo, hi, cache)
+    HDF5DiskArray{T, N, C, D, R}(ds, cs, lo, hi, cache, lo, hi, [])
 end
 
 @generated function _getindex(x::HDF5DiskArray{T, N, C, D, R}, r::Integer...) where {T, N, C, D, R}

@@ -96,7 +96,7 @@ for d in 1:3
         exp(d * log(n)) * 8 > 1024^3 && continue
         h5open("disk_$(d)_$n.h5", "w") do fid
             chunk = ntuple(i -> min(n, 100), d)
-            x = rand(fill(n, d)...)
+            x = randn(fill(n, d)...)
             fid["x", "chunk", chunk] = x
         end
         x = h5load("disk_$(d)_$n.h5", "x")
