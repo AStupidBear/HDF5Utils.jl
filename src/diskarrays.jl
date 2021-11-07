@@ -15,6 +15,16 @@ eachchunk(x::HDF5DiskArray{<:Any, <:Any, <:GridChunks}) = x.cs
 
 readblock!(x::HDF5DiskArray, aout, r::OrdinalRange...) = aout .= x.ds[r...]
 
+function readblock!(x::HDF5DiskArray, aout, r::AbstractUnitRange...)
+    lo = minimum.(r)
+    hi = maximum.(r)
+    if x.lo != lo || x.hi != hi
+        x.lo, x.hi = lo, hi
+        x.cache = x.ds[r...]
+    end
+    aout .= x.cache
+end
+
 function readblock!(A::HDF5DiskArray, A_ret, r::AbstractVector...)
     r′ = map(i -> i isa OrdinalRange ? i : minimum(i):maximum(i), r)
     r′′ = map(i -> i isa OrdinalRange ? (:) : i .- i[1] .+ 1, r)
