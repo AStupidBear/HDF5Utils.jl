@@ -21,7 +21,9 @@ dict = Dict(
 h5save("test.h5", dict)
 @test h5open(read, "test.h5") == dict
 @test h5open(tryreadmmap, "test.h5") == dict
-@test h5load("test.h5") == dict
+@test h5load("test.h5", diskarrays = true) == dict
+@test h5load("test.h5", mmaparrays = true) == dict
+@test h5load("test.h5", mmaparrays = false) == dict
 
 mutable struct Data
     x::Array{Float32, 2}

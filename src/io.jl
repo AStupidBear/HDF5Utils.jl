@@ -49,15 +49,16 @@ function HDF5.close(obj::HDF5File)
     nothing
 end
 
-function h5load(src, ::Type{T}, pv...; mode = "r", mmaparrays = true, gc = false, ka...) where T
+function h5load(src, ::Type{T}, pv...; mode = "r", diskarrays = false, mmaparrays = true, gc = false, ka...) where T
     gc && @eval GC.gc(true)
     fid = h5open(src, mode, pv...; ka...)
     os = Any[]
+    fread = diskarrays ? readdisk : !Sys.iswindows() && mmaparrays ? tryreadmmap : read
     for s in fieldnames(T)
         ft = fieldtype(T, s)
         x = if ft <: AbstractArray
             if string(s) ∈ names(fid)
-                !Sys.iswindows() && mmaparrays ? tryreadmmap(fid[string(s)]) : read(fid[string(s)])
+                fread(fid[string(s)])
             else
                 zeros(ft.parameters[1], ntuple(i -> 0, ft.parameters[2]))
             end
@@ -72,13 +73,14 @@ function h5load(src, ::Type{T}, pv...; mode = "r", mmaparrays = true, gc = false
     return obj
 end
 
-function h5load(src, paths = nothing, pv...; mode = "r", mmaparrays = true, gc = false, ka...)
+function h5load(src, paths = nothing, pv...; mode = "r", diskarrays = false, mmaparrays = true, gc = false, ka...)
     gc && @eval GC.gc(true)
     fid = h5open(src, mode, pv...; ka...)
+    fread = diskarrays ? readdisk : !Sys.iswindows() && mmaparrays ? tryreadmmap : read
     if isnothing(paths)
-        obj = !Sys.iswindows() && mmaparrays ? tryreadmmap(fid) : read(fid)
+        obj = fread(fid)
     elseif paths isa AbstractArray
-        obj = Dict(path => tryreadmmap(fid[path]) for path in paths)
+        obj = Dict(path => fread(fid[path]) for path in paths)
     end
     gc && Threads.nthreads() == 1 && finalizer(x -> HDF5.h5_garbage_collect(), obj)
     return obj
