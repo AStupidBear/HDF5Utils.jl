@@ -41,4 +41,6 @@ include("auto.jl")
 
 @init @require PyCall="438e738f-606a-5dbb-bf0a-cddfbfd45ab0" include("npystring.jl")
 
+@init set_cache_size(parse(Int, get(ENV, "HDF5_CACHE_SIZE", "10")) * 1024^2)
+
 end # module
