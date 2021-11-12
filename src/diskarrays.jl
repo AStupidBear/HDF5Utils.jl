@@ -63,7 +63,11 @@ function HDF5DiskArray(dset::HDF5Dataset)
         chunks = GridChunks(dset, size(dset))
     else
         disable_dag()
-        chunksize = try get_chunk(dset) catch e size(dset) end
+        chunksize = try 
+            HDF5.get_chunk(dset)
+        catch e
+            DiskArrays.estimate_chunksize(dset)
+        end
         enable_dag()
         chunks = GridChunks(dset, chunksize)
     end
