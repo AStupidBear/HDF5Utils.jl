@@ -100,9 +100,9 @@ for d in 1:3
             fid["x", "chunk", chunk] = x
         end
         x = h5load("disk_$(d)_$n.h5", "x")
-        sum(read(x.ds)), sumloop(x)
+        sum(read(x.dset)), sumloop(x)
         t_cache = @elapsed s_cache = sumloop(x)
-        t_read = @elapsed s_read = sum(read(x.ds))
+        t_read = @elapsed s_read = sum(read(x.dset))
         @show n, d, t_cache / t_read
         @test s_read ≈ s_cache
     end
