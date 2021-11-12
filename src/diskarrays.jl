@@ -1,43 +1,43 @@
-mutable struct HDF5DiskArray{T, N, C, D, R} <: AbstractDiskArray{T, N}
-    ds::HDF5Dataset
-    cs::C
+mutable struct HDF5DiskArray{T, N, D, R} <: AbstractDiskArray{T, N}
+    dset::HDF5Dataset
+    chunks::GridChunks
     lo::NTuple{N, Int}
     hi::NTuple{N, Int}
     cache::Array{T, D}
-    blklo::NTuple{N, Int}
-    blkhi::NTuple{N, Int}
-    blkcache::Array{T}
+    blkrange
+    blkcache::Array{T, N}
 end
 
-Base.size(x::HDF5DiskArray{T, N}) where {T, N} = size(x.ds)::NTuple{N, Int}
+Base.size(x::HDF5DiskArray{T, N}) where {T, N} = size(x.dset)::NTuple{N, Int}
 
-haschunks(x::HDF5DiskArray{<:Any, <:Any, Nothing}) = Chunked()
-haschunks(x::HDF5DiskArray) = Unchunked()
+haschunks(x::HDF5DiskArray) = Chunked()
+eachchunk(x::HDF5DiskArray) = x.chunks
 
-eachchunk(x::HDF5DiskArray{<:Any, <:Any, <:GridChunks}) = x.cs
-
-readblock!(x::HDF5DiskArray, aout, r::OrdinalRange...) = aout .= x.ds[r...]
-
-function readblock!(x::HDF5DiskArray, aout, r::AbstractUnitRange...)
-    lo = minimum.(r)
-    hi = maximum.(r)
-    if x.blklo != lo || x.blkhi != hi || size(x.blkcache) != size(aout)
-        x.blklo, x.blkhi = lo, hi
-        x.blkcache = x.ds[r...]
+function readblock!(x::HDF5DiskArray, aout, r::OrdinalRange...)
+    if x.blkrange != r
+        x.blkrange = r
+        x.blkcache = x.dset[r...]
     end
     aout .= x.blkcache
+    return nothing
 end
 
 function readblock!(A::HDF5DiskArray, A_ret, r::AbstractVector...)
     r′ = map(i -> i isa OrdinalRange ? i : minimum(i):maximum(i), r)
     r′′ = map(i -> i isa OrdinalRange ? (:) : i .- i[1] .+ 1, r)
-    A_temp = similar(A_ret, length.(r′))
-    readblock!(A, A_temp, r′...)
+    if A.blkrange != r
+        A_temp = similar(A_ret, length.(r′))
+        readblock!(A, A_temp, r′...)
+        A.blkrange = r
+        A.blkcache = A_temp
+    else
+        A_temp = A.blkcache
+    end
     A_ret .= view(A_temp, r′′...)
     nothing
 end
 
-writeblock!(x::HDF5DiskArray, v, r::OrdinalRange...) = x.ds[r...] = v
+writeblock!(x::HDF5DiskArray, v, r::OrdinalRange...) = x.dset[r...] = v
 
 function writeblock!(A::HDF5DiskArray, A_ret, r::AbstractVector...)
     r′ = map(i -> i isa OrdinalRange ? i : minimum(i):maximum(i), r)
@@ -56,31 +56,34 @@ end
 
 get_cache_size() = _cache_size[]
 
-get_cache_size(ds::HDF5Dataset) = _cache_size[] ÷ sizeof(eltype(ds))
+get_cache_size(dset::HDF5Dataset) = _cache_size[] ÷ sizeof(eltype(dset))
 
-function HDF5DiskArray(ds::HDF5Dataset)
-    cs = try
+function HDF5DiskArray(dset::HDF5Dataset)
+    if get(ENV, "HDF5_NOCHUNK", "0") == "1"
+        chunks = GridChunks(dset, size(dset))
+    else
         disable_dag()
-        GridChunks(ds, get_chunk(ds))
+        chunksize = try get_chunk(dset) catch e size(dset) end
         enable_dag()
-    catch
-        nothing
+        chunks = GridChunks(dset, chunksize)
     end
-    T, N, C = eltype(ds), ndims(ds), typeof(cs)
-    strides = cumprod(collect(size(ds)))
-    D = findlast(strides .< get_cache_size(ds))
+    T, N = eltype(dset), ndims(dset)
+    strides = cumprod(collect(size(dset)))
+    D = findlast(strides .< get_cache_size(dset))
     D = min(something(D, 1) + 1, N)
     if D == 1
-        R = min(get_cache_size(ds), size(ds, 1))
+        R = min(get_cache_size(dset), size(dset, 1))
     else
-        R = min(ceil(Int, get_cache_size(ds) / strides[D - 1]), size(ds, D))
+        R = min(ceil(Int, get_cache_size(dset) / strides[D - 1]), size(dset, D))
     end
     lo, hi = ntuple(zero, N), ntuple(zero, N)
-    cache = zeros(T, size(ds)[1:(D - 1)]..., 0)
-    HDF5DiskArray{T, N, C, D, R}(ds, cs, lo, hi, cache, lo, hi, [])
+    cache = zeros(T, size(dset)[1:(D - 1)]..., 0)
+    blkrange = ntuple(d -> 1:0, N)
+    blkcache = zeros(T, size(dset))
+    HDF5DiskArray{T, N, D, R}(dset, chunks, lo, hi, cache, blkrange, blkcache)
 end
 
-@generated function _getindex(x::HDF5DiskArray{T, N, C, D, R}, r::Integer...) where {T, N, C, D, R}
+@generated function _getindex(x::HDF5DiskArray{T, N, D, R}, r::Integer...) where {T, N, D, R}
     colons = fill(:(:), D - 1)
     rl = [:(r[$d]) for d in 1:(D - 1)]
     rr = [:(r[$d]) for d in (D + 1):N]
@@ -109,4 +112,4 @@ Base.getindex(x::HDF5DiskArray{T, 1}, i::Integer) where T = _getindex(x, i)
 
 Base._reshape(x::HDF5DiskArray, dims::NTuple{N, Int}) where N = Base.__reshape((x, IndexStyle(x)), dims)
 
-Base.Array(x::HDF5DiskArray) = read(x.ds)
+Base.Array(x::HDF5DiskArray) = read(x.dset)
