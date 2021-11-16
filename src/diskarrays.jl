@@ -83,7 +83,7 @@ function HDF5DiskArray(dset::HDF5Dataset)
     lo, hi = ntuple(zero, N), ntuple(zero, N)
     cache = zeros(T, size(dset)[1:(D - 1)]..., 0)
     blkrange = ntuple(d -> 1:0, N)
-    blkcache = zeros(T, size(dset))
+    blkcache = zeros(T, ntuple(d -> 0, N))
     HDF5DiskArray{T, N, D, R}(dset, chunks, lo, hi, cache, blkrange, blkcache)
 end
 
