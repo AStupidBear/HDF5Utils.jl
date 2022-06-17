@@ -30,3 +30,12 @@ end
 function enable_dag()
     e_set_auto(_errfunc[], _errdata[])
 end
+
+macro dag(ex)
+    quote
+        disable_dag()
+        res = $(esc(ex))
+        enable_dag()
+        res
+    end
+end

@@ -24,7 +24,7 @@ export h5load, h5loadv, h5save, h5readmmap, tryreadmmap
 export h5concat, h5concat!
 export MaxLenString, MLString
 export d_create_virtual, VirtualLayout, VirtualSource
-export enable_dag, disable_dag
+export enable_dag, disable_dag, @dag
 
 include("diskarrays.jl")
 include("util.jl")
