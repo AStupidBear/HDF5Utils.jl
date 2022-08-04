@@ -13,16 +13,20 @@ Base.size(x::HDF5DiskArray{T, N}) where {T, N} = size(x.dset)::NTuple{N, Int}
 haschunks(x::HDF5DiskArray) = Chunked()
 eachchunk(x::HDF5DiskArray) = x.chunks
 
-function readblock!(x::HDF5DiskArray, aout, r::OrdinalRange...)
-    if x.blkrange != r
-        x.blkrange = r
-        x.blkcache = x.dset[r...]
+function readblock!(A::HDF5DiskArray{T, N}, A_ret, r::OrdinalRange...) where {T, N}
+    if A.blkrange != r
+        A.blkrange = r
+        A.blkcache = A.dset[r...]
     end
-    aout .= x.blkcache
+    A_ret .= A.blkcache
+    if sizeof(A.blkcache) > get_cache_size(A.dset)
+        A.blkrange = ntuple(d -> 1:0, N)
+        A.blkcache = zeros(T, ntuple(d -> 0, N))
+    end
     return nothing
 end
 
-function readblock!(A::HDF5DiskArray, A_ret, r::AbstractVector...)
+function readblock!(A::HDF5DiskArray{T, N}, A_ret, r::AbstractVector...) where {T, N}
     r′ = map(i -> i isa OrdinalRange ? i : minimum(i):maximum(i), r)
     r′′ = map(i -> i isa OrdinalRange ? (:) : i .- i[1] .+ 1, r)
     if A.blkrange != r
@@ -32,6 +36,10 @@ function readblock!(A::HDF5DiskArray, A_ret, r::AbstractVector...)
         A.blkcache = A_temp
     else
         A_temp = A.blkcache
+    end
+    if sizeof(A.blkcache) > get_cache_size(A.dset)
+        A.blkrange = ntuple(d -> 1:0, N)
+        A.blkcache = zeros(T, ntuple(d -> 0, N))
     end
     A_ret .= view(A_temp, r′′...)
     nothing
